@@ -1,0 +1,1 @@
+# Decentralized inheritance protocol
