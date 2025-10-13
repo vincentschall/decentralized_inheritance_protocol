@@ -1,0 +1,201 @@
+Inheritance System with Deadman Switch + Yield
+
+A blockchain-based digital will that automatically distributes assets to beneficiaries when the owner stops proving they're alive, while generating yield during the waiting period. Solves the "sudden death crypto loss" problem where billions in crypto are permanently lost because heirs don't have access.
+
+Concrete Workflow
+
+Initial Setup (The "Will Creation")
+
+Owner deposits assets (ETH, tokens, NFTs)
+Specifies 1-10 beneficiaries with percentage splits (e.g., spouse 50%, children 25% each)
+Sets check-in frequency (e.g., every 90 days)
+Defines vesting schedule per beneficiary:
+
+Immediate: 100% released on inheritance trigger
+Vesting: Released over time (e.g., 10% per year for 10 years)
+Age-gated: Released when beneficiary reaches certain age
+
+
+Appoints 2-3 "trusted contacts" who can verify death
+Chooses yield strategy for funds while in contract
+
+
+Active Phase (Owner Alive)
+
+Owner must "check in" before deadline (sign transaction or send heartbeat)
+If checked in: timer resets to full period (90 days)
+Funds automatically deployed to yield generation
+Owner can:
+
+Withdraw funds anytime (it's still their money)
+Add/remove beneficiaries
+Adjust percentages
+Change vesting schedules
+Add more assets
+
+
+
+
+Warning Phase (Missed Check-in) // Optional (requires setup)
+
+Day 90: Automatic notification sent (email, SMS via oracle if configured)
+Grace period begins (e.g., 30 additional days)
+Trusted contacts receive alerts: "Please verify owner's status"
+Day 120: If still no check-in, moves to Verification Phase
+
+
+Verification Phase
+
+Trusted contacts can submit death verification
+Options:
+
+Minimal: 2-of-3 trusted contacts confirm
+Oracle-based: Submit death certificate hash for oracle verification
+Challenge period: 30 days for owner to prove they're alive and override
+
+
+If verified and no challenge: Moves to Distribution Phase
+
+
+Distribution Phase
+
+Assets automatically unlock according to vesting schedules
+Immediate beneficiaries: Can withdraw their share now
+Vesting beneficiaries: Funds enter time-locked vesting contract
+
+Example: $100k over 10 years = $10k unlocks per year
+Still earns yield during vesting
+
+
+Age-gated beneficiaries: Funds held until age requirement met
+
+Minor child: Locked until 18, then vesting begins
+Can withdraw generated yield earlier (optional)
+
+
+
+
+Ongoing Management (Post-Inheritance)
+
+Vesting beneficiaries receive periodic unlocks
+Yield continues generating on unvested portions
+Beneficiaries can see countdown to next unlock
+Optional: Beneficiary can accelerate vesting by burning a portion (e.g., get 50% now by forfeiting 10%)
+
+
+Edge Cases Handled
+
+False alarm: Owner returns, proves identity, reclaims full control
+Dispute: Beneficiary challenges distribution → enters arbitration period
+Partial death: One of multiple owners dies (joint accounts) → only their portion distributes
+Lost keys: Trusted contacts can initialize process even without owner's missed check-in
+
+
+
+Problems It Solves
+Problem 1: Lost Crypto Inheritance ($100B+ Problem)
+
+Issue: 4 million BTC (~$140B) estimated lost forever due to death/lost keys
+Real cases:
+
+Gerald Cotten (QuadrigaCX): $190M locked forever
+Mircea Popescu: ~$2B potentially lost
+Countless individuals: families can't access deceased's crypto
+
+
+Solution: Automatic distribution to designated heirs without needing owner's private keys
+How: Beneficiaries have separate keys; contract enforces distribution logic
+
+Problem 2: Probate Process Delays & Costs
+
+Issue: Traditional inheritance takes 6-24 months, costs 3-7% of estate value
+Example: $500k estate → $15k-35k in legal fees, 12-month wait
+Solution: Automated distribution in ~120 days (90 + 30 grace period)
+Savings: Only gas fees (~$50-200), no lawyers required for execution
+
+Problem 3: Will Contestation & Family Disputes
+
+Issue: 60% of probate cases involve disputes; leads to years of litigation
+Solution: Immutable distribution rules; can't be contested after setup
+Transparency: All beneficiaries can see the rules from day one
+No ambiguity: Smart contract executes exactly as programmed
+
+Problem 4: Sudden Wealth Syndrome in Heirs
+
+Issue: 70% of lottery winners and sudden inheritance recipients go broke within years
+Research: Young inheritors often mismanage lump sums
+Solution: Vesting schedules enforce gradual distribution
+Example: $1M inheritance → $100k/year for 10 years prevents blow-out
+Added safety: Funds still earn yield during vesting (beneficiary gets even more)
+
+Problem 5: Minor Children as Beneficiaries
+
+Issue: Can't give large sums to minors; requires court-appointed guardian
+Solution: Age-gated releases with optional yield access
+Example:
+
+10-year-old inherits $200k
+Can withdraw generated yield (~$1,000/month at 6% APY) for expenses
+Principal locked until 18
+Then vests over 5 years (25, 50, 75, 100% at ages 18, 21, 25, 30)
+
+
+
+Problem 6: Inactive Account Detection
+
+Issue: No standardized way to prove someone is alive in crypto
+Solution: Regular check-ins create proof-of-life
+Benefit: Owner stays engaged; heirs have certainty about process
+Prevents: Assets locked forever in wallet no one can access
+
+Target Use Cases
+
+Crypto Holders with Families
+
+Person with significant crypto holdings
+Wants to ensure spouse/children inherit
+Check in quarterly while alive
+Death → automatic distribution with smart vesting
+
+
+Business Owners with Digital Assets
+
+NFT collections, token holdings, DeFi positions
+Co-founder/business partner as trusted contact
+Ensures business continuity
+Vesting prevents market dump of large holdings
+
+
+International Families
+
+Beneficiaries in different countries
+Traditional probate is nightmare across jurisdictions
+Smart contract works globally
+No currency conversion issues (distribute in crypto or stablecoins)
+
+
+People with Complex Family Structures
+
+Multiple marriages, stepchildren, diverse beneficiaries
+Want clear, unambiguous distribution
+Prevents family fighting
+Each party can independently verify their allocation
+
+
+Early Crypto Adopters (Large Holdings)
+
+People with >$1M in crypto
+Concerned about heirs' ability to manage sudden wealth
+10-20 year vesting ensures responsible distribution
+Yield generation continues growing wealth
+
+
+
+Key Innovations
+
+Active liveness proof: Owner must prove they're alive (vs. passive "if I die")
+Graceful failure: Multiple verification layers prevent false triggers
+Yield + inheritance: Dead capital becomes productive capital
+Graduated distribution: Prevents beneficiary mismanagement
+No key sharing: Owner never gives up control until actually needed
+Crypto-native probate: Solves specifically for digital asset inheritance
