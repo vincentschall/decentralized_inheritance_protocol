@@ -10,6 +10,14 @@ not definitive and not in-order.
 - [ ] mocking death certificates for verification phase
 - [ ] payout logic
 
+## hardhat version
+
+This project uses hardhat v3. See the [documentation](https://hardhat.org/docs/getting-started).
+
+## styleguide
+
+Usage of [NatSpec](https://docs.soliditylang.org/en/latest/natspec-format.html) style comments is encouraged.
+
 
 * [Project Description](description.txt)
 * [Contributing](CONTRIBUTING.md)
