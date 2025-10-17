@@ -46,4 +46,27 @@ describe("Inheritance Protocol", function () {
             expect(await inheritanceProtocol.usdc()).to.equal(await mockUSDC.getAddress());
         });
     });
+
+    describe("Initialization", function () {
+        it("Should set the correct number of active beneficiaries", async function () {
+            expect(await inheritanceProtocol.getActiveCount()).to.equal(0);
+        });
+
+        it("Should return an empty list of beneficiaries", async function () {
+            const beneficiaries = await inheritanceProtocol.getBeneficiaries();
+            beneficiaries.forEach((beneficiary) => {
+                expect(beneficiary[0]).to.equal("0x0000000000000000000000000000000000000000");
+                expect(beneficiary[1]).to.equal(0n);
+            })
+        });
+
+        it("Should set determined payout percentage to 0", async function () {
+            expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(0);
+        });
+
+        it("Should define that the payout is not fully determined", async function () {
+            expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.equal(false);
+        })
+    });
+
 });
