@@ -9,3 +9,8 @@ not definitive and not in-order.
 - [ ] state handling: check-ins
 - [ ] mocking death certificates for verification phase
 - [ ] payout logic
+
+
+* [Project Description](description.txt)
+* [Contributing](CONTRIBUTING.md)
+* [License](LICENSE.md)
