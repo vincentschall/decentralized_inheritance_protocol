@@ -8,11 +8,22 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract InheritanceProtocol is Ownable, ReentrancyGuard {
     IERC20 public immutable usdc;
 
+    /**
+     * Defines the state of the contract.
+     *  - Active: mutable state, owner check-ins required.
+     *  - Warning: Missed check-in, notification sent at 90 days,
+     *    verification phase starts at 120 days.
+     *  - Verification: submission of death certificate (30 days).
+     *  - Distribution: distribute assets based on defined conditions.
+     */
     enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
 
+    /**
+     * Stores address and payout percentage amount (0-100) of a beneficiary.
+     */
     struct Beneficiary {
         address payoutAddress;
-        uint256 amount; // percentage value (0-100)
+        uint256 amount;
     }
 
     Beneficiary[10] private beneficiaries;
@@ -24,15 +35,21 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     event BeneficiaryAdded(address indexed payoutAddress, uint256 amount, uint256 index);
     event BeneficiaryRemoved(address indexed payoutAddress, uint256 index);
 
+    /**
+     * Initializes a new InheritanceProtocol.
+     * @param _usdcAddress address of the currency used (non-zero).
+     */
     constructor(address _usdcAddress) Ownable(msg.sender) {
         require(_usdcAddress != address(0), "USDC address zero");
         usdc = IERC20(_usdcAddress);
     }
 
-    function getBeneficiaries() public view returns (Beneficiary[10] memory) {
-        return beneficiaries;
-    }
+    /// ---------- BENEFICIARY HANDLING ----------
 
+    /**
+     * Gets only the active beneficiaries.
+     * @return an array of beneficiaries.
+     */
     function getActiveBeneficiaries() public view returns (Beneficiary[] memory) {
         uint256 activeCount = getActiveCount();
         Beneficiary[] memory active = new Beneficiary[](activeCount);
@@ -46,20 +63,14 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return active;
     }
 
-    function getActiveCount() public view returns (uint256) {
-        uint256 count;
-        for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress != address(0)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
+    /**
+     * Removes a beneficiary with a given address.
+     * Only the owner can perform this action.
+     * @param _address the address to remove.
+     * Fails if the provided address is zero OR not in the list of beneficiaries.
+     * @return true if the deletion was successful, false otherwise.
+     */
     function removeBeneficiary(address _address) public onlyOwner returns (bool) {
-        // return type (bool):
-        // true if deletion was successful
-        // false otherwise
         uint256 index = findBeneficiaryIndex(_address);
         if (index == NOT_FOUND) {
             return false;
@@ -69,6 +80,11 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return true;
     }
 
+    /**
+     * Finds the index of a beneficiary in the beneficiaries list.
+     * @param _address the address whose index to find.
+     * @return the index if the address is in the list, 'NOT_FOUND' otherwise.
+     */
     function findBeneficiaryIndex(address _address) public view returns (uint256) {
         if (_address == address(0)) {
             return NOT_FOUND;
@@ -81,10 +97,17 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return NOT_FOUND;
     }
 
+    /**
+     * Adds a beneficiary to the list.
+     * Only the owner can perform this action.
+     * Requirements:
+     *  - List not full
+     *  - Payout after adding <= 100
+     * @param _address the address to add to the list.
+     * @param amount the payout amount related to this address.
+     * @return true if the addition was successful, false otherwise.
+     */
     function addBeneficiary(address _address, uint256 amount) public onlyOwner returns (bool) {
-        // return type (bool):
-        // true if addition was successful
-        // false otherwise
         require(_address != address(0), "Invalid address");
         require(amount > 0 && amount <= MAX_PERCENTAGE, "Invalid amount");
 
@@ -117,6 +140,22 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return true;
     }
 
+    function getBeneficiaries() public view returns (Beneficiary[10] memory) {
+        return beneficiaries;
+    }
+
+    function getActiveCount() public view returns (uint256) {
+        uint256 count;
+        for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
+            if (beneficiaries[i].payoutAddress != address(0)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /// ---------- HELPER METHODS ----------
+
     function isPayoutFullyDetermined() public view returns (bool) {
         uint256 sum = getDeterminedPayoutPercentage();
         return sum == MAX_PERCENTAGE;
@@ -131,4 +170,5 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         }
         return sum;
     }
+
 }
