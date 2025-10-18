@@ -5,20 +5,20 @@
 not definitive and not in-order.  
 
 - **beneficiary management logic**
-  - Implemented: [x]
-  - Tested: [x]
+  - [x] Implemented
+  - [x] Tested
 - **transfering and withdrawing assets (mockusdc for now)**
-  - Implemented: [ ]
-  - Tested: [ ]
+  - [ ] Implemented
+  - [ ] Tested
 - **state handling: check-ins**
-  - Implemented: [ ]
-  - Tested: [ ]
+  - [ ] Implemented
+  - [ ] Tested
 - **mocking death certificates for verification phase**
-  - Implemented: [ ]
-  - Tested: [ ]
+  - [ ] Implemented
+  - [ ] Tested
 - **payout logic**
-  - Implemented: [ ]
-  - Tested: [ ]
+  - [ ] Implemented
+  - [ ] Tested
 
 ## hardhat version
 
