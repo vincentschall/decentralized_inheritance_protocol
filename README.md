@@ -4,13 +4,21 @@
 
 not definitive and not in-order.  
 
-| Feature | Implemented | Tested |
-|---------|-------------|--------|
-| beneficiary management logic | [x] | [ ] |
-| transfering and withdrawing assets (mockusdc for now) | [ ] | [ ] |
-| state handling: check-ins | [ ] | [ ] |
-| mocking death certificates for verification phase | [ ] | [ ] |
-| payout logic | [ ] | [ ] |  
+- **beneficiary management logic**
+  - Implemented: [x]
+  - Tested: [x]
+- **transfering and withdrawing assets (mockusdc for now)**
+  - Implemented: [ ]
+  - Tested: [ ]
+- **state handling: check-ins**
+  - Implemented: [ ]
+  - Tested: [ ]
+- **mocking death certificates for verification phase**
+  - Implemented: [ ]
+  - Tested: [ ]
+- **payout logic**
+  - Implemented: [ ]
+  - Tested: [ ]
 
 ## hardhat version
 
