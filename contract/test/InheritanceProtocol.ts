@@ -5,68 +5,399 @@ import type { InheritanceProtocol, MockUSDC } from "../types/ethers-contracts/in
 let connectedEthers: Awaited<ReturnType<typeof hre.network.connect>>['ethers'];
 
 describe("Inheritance Protocol", function () {
-    let inheritanceProtocol: InheritanceProtocol;
-    let mockUSDC: MockUSDC;
-    type SignerType = Awaited<ReturnType<typeof connectedEthers.getSigners>>[number];
-    let owner: SignerType;
-    let addrs: SignerType[];
+	let inheritanceProtocol: InheritanceProtocol;
+	let mockUSDC: MockUSDC;
+	type SignerType = Awaited<ReturnType<typeof connectedEthers.getSigners>>[number];
+	let owner: SignerType;
+	let addrs: SignerType[];
+	let beneficiary1: SignerType;
+	let beneficiary2: SignerType;
+	let beneficiary3: SignerType;
+	let beneficiary4: SignerType;
+	let beneficiary5: SignerType;
+	let beneficiary6: SignerType;
+	let beneficiary7: SignerType;
+	let beneficiary8: SignerType;
+	let beneficiary9: SignerType;
+	let beneficiary10: SignerType;
 
-    const USDC_DECIMALS = 6;
-    const INITIAL_USDC_BALANCE = 10000n * (10n ** BigInt(USDC_DECIMALS));
+	const USDC_DECIMALS = 6;
+	const INITIAL_USDC_BALANCE = 10000n * (10n ** BigInt(USDC_DECIMALS));
 
-    before(async function () {
-        const { ethers } = await hre.network.connect();
-        connectedEthers = ethers;
-        [owner, ...addrs] = await connectedEthers.getSigners();
-    });
+	before(async function () {
+		const { ethers } = await hre.network.connect();
+		connectedEthers = ethers;
+		[owner, beneficiary1, beneficiary2, beneficiary3, beneficiary4, beneficiary5, beneficiary6, beneficiary7, beneficiary8, beneficiary9, beneficiary10, ...addrs] = await connectedEthers.getSigners();
+	});
 
-    beforeEach(async function () {
-        const MockUSDCFactory = await connectedEthers.getContractFactory("MockUSDC");
-        mockUSDC = await MockUSDCFactory.deploy();
+	beforeEach(async function () {
+		const MockUSDCFactory = await connectedEthers.getContractFactory("MockUSDC");
+		mockUSDC = await MockUSDCFactory.deploy();
 
-        const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
-        inheritanceProtocol = await InheritanceProtocolFactory.deploy(
-            await mockUSDC.getAddress()
-        );
+		const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
+		inheritanceProtocol = await InheritanceProtocolFactory.deploy(
+			await mockUSDC.getAddress()
+		);
 
-        await mockUSDC.mint(owner.address, INITIAL_USDC_BALANCE);
+		await mockUSDC.mint(owner.address, INITIAL_USDC_BALANCE);
 
-        await mockUSDC.connect(owner).approve(
-            await inheritanceProtocol.getAddress(),
-            2n ** 256n - 1n
-        );
-    });
+		await mockUSDC.connect(owner).approve(
+			await inheritanceProtocol.getAddress(),
+			2n ** 256n - 1n
+		);
+	});
 
-    describe("Deployment", function () {
-        it("Should set the right owner", async function () {
-            expect(await inheritanceProtocol.owner()).to.equal(owner.address);
-        });
+	describe("Deployment", function () {
+		it("Should set the right owner", async function () {
+			expect(await inheritanceProtocol.owner()).to.equal(owner.address);
+		});
 
-        it("Should set the correct USDC address", async function () {
-            expect(await inheritanceProtocol.usdc()).to.equal(await mockUSDC.getAddress());
-        });
-    });
+		it("Should set the correct USDC address", async function () {
+			expect(await inheritanceProtocol.usdc()).to.equal(await mockUSDC.getAddress());
+		});
+	});
 
-    describe("Initialization", function () {
-        it("Should set the correct number of active beneficiaries", async function () {
-            expect(await inheritanceProtocol.getActiveCount()).to.equal(0);
-        });
+	describe("Initialization", function () {
+		it("Should set the correct number of active beneficiaries", async function () {
+			expect(await inheritanceProtocol.getActiveCount()).to.equal(0);
+		});
 
-        it("Should return an empty list of beneficiaries", async function () {
-            const beneficiaries = await inheritanceProtocol.getBeneficiaries();
-            beneficiaries.forEach((beneficiary) => {
-                expect(beneficiary[0]).to.equal("0x0000000000000000000000000000000000000000");
-                expect(beneficiary[1]).to.equal(0n);
-            })
-        });
+		it("Should return an empty list of beneficiaries", async function () {
+			const beneficiaries = await inheritanceProtocol.getBeneficiaries();
+			beneficiaries.forEach((beneficiary) => {
+				expect(beneficiary[0]).to.equal("0x0000000000000000000000000000000000000000");
+				expect(beneficiary[1]).to.equal(0n);
+			})
+		});
 
-        it("Should set determined payout percentage to 0", async function () {
-            expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(0);
-        });
+		it("Should set determined payout percentage to 0", async function () {
+			expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(0);
+		});
 
-        it("Should define that the payout is not fully determined", async function () {
-            expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.equal(false);
-        })
-    });
+		it("Should define that the payout is not fully determined", async function () {
+			expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.equal(false);
+		});
+	});
 
+	describe("Beneficiary handling helpers", function () {
+		async function setupBeneficiaries(setup: Array<{ address: SignerType; amount: bigint }>) {
+			for (const { address, amount } of setup) {
+				const tx = await inheritanceProtocol.addBeneficiary(address.address, amount);
+				await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+			}
+		}
+
+		describe("Adding beneficiaries", function () {
+			it("Should allow adding a single valid beneficiary", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+				const tx = await inheritanceProtocol.addBeneficiary(beneficiary1.address, 10n);
+				await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 1n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 10n);
+			});
+
+			it("Should allow adding multiple beneficiaries up to max without exceeding 100%", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 10n },
+					{ address: beneficiary2, amount: 20n },
+					{ address: beneficiary3, amount: 30n },
+					{ address: beneficiary4, amount: 40n }
+				]);
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 4n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 100n);
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.true;
+			});
+
+			it("Should allow adding exactly 10 beneficiaries", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 10n },
+					{ address: beneficiary2, amount: 10n },
+					{ address: beneficiary3, amount: 10n },
+					{ address: beneficiary4, amount: 10n },
+					{ address: beneficiary5, amount: 10n },
+					{ address: beneficiary6, amount: 10n },
+					{ address: beneficiary7, amount: 10n },
+					{ address: beneficiary8, amount: 10n },
+					{ address: beneficiary9, amount: 10n },
+					{ address: beneficiary10, amount: 10n }
+				]);
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 10n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 100n);
+			});
+
+			it("Should reject adding a beneficiary with zero address", async function () {
+				await expect(
+					inheritanceProtocol.addBeneficiary("0x0000000000000000000000000000000000000000", 10n)
+				).to.be.revertedWith("Invalid address");
+			});
+
+			it("Should reject adding a beneficiary with invalid amount (0)", async function () {
+				await expect(
+					inheritanceProtocol.addBeneficiary(beneficiary1.address, 0n)
+				).to.be.revertedWith("Invalid amount");
+			});
+
+			it("Should reject adding a beneficiary with invalid amount (>100)", async function () {
+				await expect(
+					inheritanceProtocol.addBeneficiary(beneficiary1.address, 101n)
+				).to.be.revertedWith("Invalid amount");
+			});
+
+			it("Should reject adding a duplicate beneficiary", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				const tx1 = await inheritanceProtocol.addBeneficiary(beneficiary1.address, 10n);
+				await expect(tx1).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+
+				const tx2 = await inheritanceProtocol.addBeneficiary(beneficiary1.address, 20n);
+				await expect(tx2).to.not.emit(inheritanceProtocol, "BeneficiaryAdded");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 1n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 10n);
+			});
+
+			it("Should reject adding when total percentage would exceed 100%", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 50n },
+					{ address: beneficiary2, amount: 50n }
+				]);
+
+				const tx = await inheritanceProtocol.addBeneficiary(beneficiary3.address, 1n);
+				await expect(tx).to.not.emit(inheritanceProtocol, "BeneficiaryAdded");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 2n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 100n);
+			});
+
+			it("Should reject adding when list is full (10 beneficiaries)", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 10n },
+					{ address: beneficiary2, amount: 10n },
+					{ address: beneficiary3, amount: 10n },
+					{ address: beneficiary4, amount: 10n },
+					{ address: beneficiary5, amount: 10n },
+					{ address: beneficiary6, amount: 10n },
+					{ address: beneficiary7, amount: 10n },
+					{ address: beneficiary8, amount: 10n },
+					{ address: beneficiary9, amount: 10n },
+					{ address: beneficiary10, amount: 10n }
+				]);
+
+				const tx = await inheritanceProtocol.addBeneficiary(addrs[0].address, 5n);
+				await expect(tx).to.not.emit(inheritanceProtocol, "BeneficiaryAdded");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 10n);
+			});
+		});
+
+		describe("Removing beneficiaries", function () {
+			beforeEach(async function () {
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 10n },
+					{ address: beneficiary2, amount: 20n },
+					{ address: beneficiary3, amount: 30n }
+				]);
+			});
+
+			it("Should allow removing a valid beneficiary", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				const tx = await inheritanceProtocol.removeBeneficiary(beneficiary2.address);
+				await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryRemoved");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount - 1n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum - 20n);
+			});
+
+			it("Should reject removing a non-existent beneficiary", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				const tx = await inheritanceProtocol.removeBeneficiary(addrs[0].address);
+				await expect(tx).to.not.emit(inheritanceProtocol, "BeneficiaryRemoved");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum);
+			});
+
+			it("Should reject removing zero address", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				const tx = await inheritanceProtocol.removeBeneficiary("0x0000000000000000000000000000000000000000");
+				await expect(tx).to.not.emit(inheritanceProtocol, "BeneficiaryRemoved");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum);
+			});
+
+			it("Should update fully determined status after removal", async function () {
+				// Clear existing beneficiaries from beforeEach
+				await inheritanceProtocol.removeBeneficiary(beneficiary1.address);
+				await inheritanceProtocol.removeBeneficiary(beneficiary2.address);
+				await inheritanceProtocol.removeBeneficiary(beneficiary3.address);
+
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 40n },
+					{ address: beneficiary2, amount: 60n }
+				]);
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.true;
+
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				const tx = await inheritanceProtocol.removeBeneficiary(beneficiary2.address);
+				await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryRemoved");
+
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum - 60n);
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.false;
+			});
+		});
+
+		describe("Getting beneficiaries", function () {
+			beforeEach(async function () {
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 10n },
+					{ address: beneficiary3, amount: 30n },
+					{ address: beneficiary5, amount: 50n }
+				]);
+			});
+
+			it("Should return the full fixed-size array of beneficiaries", async function () {
+				const fullList = await inheritanceProtocol.getBeneficiaries();
+				expect(fullList.length).to.equal(10);
+
+				// Check active ones are in expected positions (order depends on addition order)
+				const activeAddresses = [beneficiary1.address, beneficiary3.address, beneficiary5.address];
+				const activeAmounts = [10n, 30n, 50n];
+				let activeFound = 0;
+				for (let i = 0; i < 10; i++) {
+					const addr = fullList[i][0];
+					const amt = fullList[i][1];
+					if (activeAddresses.includes(addr)) {
+						const idx = activeAddresses.indexOf(addr);
+						expect(amt).to.equal(activeAmounts[idx]);
+						activeFound++;
+					} else {
+						expect(addr).to.equal("0x0000000000000000000000000000000000000000");
+						expect(amt).to.equal(0n);
+					}
+				}
+				expect(activeFound).to.equal(3);
+			});
+
+			it("Should return only active beneficiaries in getActiveBeneficiaries", async function () {
+				const activeList = await inheritanceProtocol.getActiveBeneficiaries();
+				expect(activeList.length).to.equal(3);
+				const activeAddresses = [beneficiary1.address, beneficiary3.address, beneficiary5.address];
+				const activeAmounts = [10n, 30n, 50n];
+				activeList.forEach((beneficiary, i) => {
+					expect(beneficiary[0]).to.equal(activeAddresses[i]);
+					expect(beneficiary[1]).to.equal(activeAmounts[i]);
+				});
+			});
+
+			it("Should correctly count active beneficiaries", async function () {
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(3);
+			});
+
+			it("Should correctly compute determined payout percentage", async function () {
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(90n);
+			});
+
+			it("Should correctly check if payout is fully determined", async function () {
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.false;
+
+				// Add one more to make 100%
+				const tx = await inheritanceProtocol.addBeneficiary(beneficiary2.address, 10n);
+				await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.true;
+			});
+		});
+
+		describe("Edge cases", function () {
+			it("Should handle adding and removing in mixed order without issues", async function () {
+				// Add 5
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 20n },
+					{ address: beneficiary2, amount: 20n },
+					{ address: beneficiary3, amount: 20n },
+					{ address: beneficiary4, amount: 20n },
+					{ address: beneficiary5, amount: 20n }
+				]);
+				let currentCount = await inheritanceProtocol.getActiveCount();
+				let currentSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+				expect(currentCount).to.equal(5n);
+				expect(currentSum).to.equal(100n);
+
+				// Remove one
+				const removeTx = await inheritanceProtocol.removeBeneficiary(beneficiary3.address);
+				await expect(removeTx).to.emit(inheritanceProtocol, "BeneficiaryRemoved");
+				currentCount = await inheritanceProtocol.getActiveCount();
+				currentSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+				expect(currentCount).to.equal(4n);
+				expect(currentSum).to.equal(80n);
+
+				// Try to add back with adjusted amount
+				const addTx1 = await inheritanceProtocol.addBeneficiary(beneficiary3.address, 10n);
+				await expect(addTx1).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+				currentCount = await inheritanceProtocol.getActiveCount();
+				currentSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+				expect(currentCount).to.equal(5n);
+				expect(currentSum).to.equal(90n);
+
+				// Fill to 100% with another
+				const addTx2 = await inheritanceProtocol.addBeneficiary(beneficiary6.address, 10n);
+				await expect(addTx2).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.true;
+			});
+
+			it("Should handle max percentage exactly at 100% without overflow", async function () {
+				const initialCount = await inheritanceProtocol.getActiveCount();
+				const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
+
+				const tx = await inheritanceProtocol.addBeneficiary(beneficiary1.address, 100n);
+				await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryAdded");
+
+				expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 1n);
+				expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 100n);
+				expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.true;
+
+				// Cannot add more
+				const tx2 = await inheritanceProtocol.addBeneficiary(beneficiary2.address, 1n);
+				await expect(tx2).to.not.emit(inheritanceProtocol, "BeneficiaryAdded");
+			});
+
+			it("findBeneficiaryIndex should work correctly", async function () {
+				await setupBeneficiaries([
+					{ address: beneficiary1, amount: 10n },
+					{ address: beneficiary2, amount: 20n }
+				]);
+
+				// Note: This is an internal view function, but we can test via events or indirect checks
+				// For direct testing, we'd need to expose it or infer from behavior
+				// Here, infer from remove success
+				const removeTx1 = await inheritanceProtocol.removeBeneficiary(beneficiary1.address);
+				await expect(removeTx1).to.emit(inheritanceProtocol, "BeneficiaryRemoved");
+
+				const removeTx2 = await inheritanceProtocol.removeBeneficiary(beneficiary2.address);
+				await expect(removeTx2).to.emit(inheritanceProtocol, "BeneficiaryRemoved");
+
+				const removeTx3 = await inheritanceProtocol.removeBeneficiary(addrs[0].address);
+				await expect(removeTx3).to.not.emit(inheritanceProtocol, "BeneficiaryRemoved");
+			});
+		});
+	});
 });
