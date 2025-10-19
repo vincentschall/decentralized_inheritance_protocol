@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { ZeroAddress } from "ethers";
 import hre from "hardhat";
 import type { InheritanceProtocol, MockUSDC } from "../types/ethers-contracts/index.js";
 
@@ -65,8 +66,8 @@ describe("Inheritance Protocol", function () {
         it("Should return an empty list of beneficiaries", async function () {
             const beneficiaries = await inheritanceProtocol.getBeneficiaries();
             beneficiaries.forEach((beneficiary) => {
-                expect(beneficiary[0]).to.equal("0x0000000000000000000000000000000000000000");
-                expect(beneficiary[1]).to.equal(0n);
+                expect(beneficiary.payoutAddress).to.equal(ZeroAddress);
+                expect(beneficiary.amount).to.equal(0n);
             })
         });
 
@@ -132,7 +133,7 @@ describe("Inheritance Protocol", function () {
 
             it("Should reject adding a beneficiary with zero address", async function () {
                 await expect(
-                    inheritanceProtocol.addBeneficiary("0x0000000000000000000000000000000000000000", 10n)
+                    inheritanceProtocol.addBeneficiary(ZeroAddress, 10n)
                 ).to.be.revertedWith("Invalid address");
             });
 
@@ -237,7 +238,7 @@ describe("Inheritance Protocol", function () {
                 const initialCount = await inheritanceProtocol.getActiveCount();
                 const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
 
-                const tx = await inheritanceProtocol.removeBeneficiary("0x0000000000000000000000000000000000000000");
+                const tx = await inheritanceProtocol.removeBeneficiary(ZeroAddress);
                 await expect(tx).to.not.emit(inheritanceProtocol, "BeneficiaryRemoved");
 
                 expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount);
@@ -279,23 +280,24 @@ describe("Inheritance Protocol", function () {
                 const fullList = await inheritanceProtocol.getBeneficiaries();
                 expect(fullList.length).to.equal(10);
 
-                // Check active ones are in expected positions (order depends on addition order)
+                // Check active ones (order preserved by addition; collect and match)
                 const activeAddresses = [beneficiary1.address, beneficiary3.address, beneficiary5.address];
                 const activeAmounts = [10n, 30n, 50n];
-                let activeFound = 0;
+                const foundActive = new Map<string, bigint>();
                 for (let i = 0; i < 10; i++) {
-                    const addr = fullList[i][0];
-                    const amt = fullList[i][1];
+                    const addr = fullList[i].payoutAddress;
+                    const amt = fullList[i].amount;
                     if (activeAddresses.includes(addr)) {
-                        const idx = activeAddresses.indexOf(addr);
-                        expect(amt).to.equal(activeAmounts[idx]);
-                        activeFound++;
+                        foundActive.set(addr, amt);
                     } else {
-                        expect(addr).to.equal("0x0000000000000000000000000000000000000000");
+                        expect(addr).to.equal(ZeroAddress);
                         expect(amt).to.equal(0n);
                     }
                 }
-                expect(activeFound).to.equal(3);
+                expect(foundActive.size).to.equal(3);
+                activeAddresses.forEach((expectedAddr, idx) => {
+                    expect(foundActive.get(expectedAddr)).to.equal(activeAmounts[idx]);
+                });
             });
 
             it("Should return only active beneficiaries in getActiveBeneficiaries", async function () {
@@ -304,8 +306,8 @@ describe("Inheritance Protocol", function () {
                 const activeAddresses = [beneficiary1.address, beneficiary3.address, beneficiary5.address];
                 const activeAmounts = [10n, 30n, 50n];
                 activeList.forEach((beneficiary, i) => {
-                    expect(beneficiary[0]).to.equal(activeAddresses[i]);
-                    expect(beneficiary[1]).to.equal(activeAmounts[i]);
+                    expect(beneficiary.payoutAddress).to.equal(activeAddresses[i]);
+                    expect(beneficiary.amount).to.equal(activeAmounts[i]);
                 });
             });
 
@@ -438,7 +440,8 @@ describe("Inheritance Protocol", function () {
             it("Should reject deposit from non-owner", async function () {
                 await expect(
                     inheritanceProtocol.connect(addrs[0]).deposit(DEPOSIT_AMOUNT)
-                ).to.be.revertedWith("Ownable: caller is not the owner.");
+                ).to.be.revertedWithCustomError(inheritanceProtocol, "OwnableUnauthorizedAccount")
+                    .withArgs(addrs[0].address);
             });
 
             // Note: State guard test assumes currentState is ACTIVE initially; full test requires state implementation
@@ -492,7 +495,8 @@ describe("Inheritance Protocol", function () {
             it("Should reject withdrawal from non-owner", async function () {
                 await expect(
                     inheritanceProtocol.connect(addrs[0]).withdraw(WITHDRAW_PARTIAL_AMOUNT)
-                ).to.be.revertedWith("Ownable: caller is not the owner.");
+                ).to.be.revertedWithCustomError(inheritanceProtocol, "OwnableUnauthorizedAccount")
+                    .withArgs(addrs[0].address);
             });
 
             it("Should allow withdrawal after adding beneficiaries (no interference)", async function () {
