@@ -28,6 +28,9 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     Beneficiary[10] private beneficiaries;
 
+    uint256 private balance;
+    State private currentState;
+
     uint256 private constant NOT_FOUND = type(uint256).max;
     uint256 private constant MAX_BENEFICIARIES = 10;
     uint256 private constant MAX_PERCENTAGE = 100;
@@ -44,6 +47,20 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     constructor(address _usdcAddress) Ownable(msg.sender) {
         require(_usdcAddress != address(0), "USDC address zero");
         usdc = IERC20(_usdcAddress);
+        currentState = State.ACTIVE;
+    }
+
+    /// ---------- State Machine ----------------
+
+    enum State {
+        ACTIVE,
+        Warning,
+        VERIFICATION,
+        DISTRIBUTION
+    }
+
+    modifier onlyPreDistribution() {
+        require(currentState < State.DISTRIBUTION, "Cannot modify funds post-distribution");
     }
 
     /// ---------- BENEFICIARY HANDLING ----------
@@ -156,6 +173,31 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return count;
     }
 
+    /// ---------- Owner Functions ----------
+
+    function deposit(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
+        //TODO add check to state machine (cannot be called after payout has happened)
+        require(amount > 0, "Amount has to be greater than zero.");
+
+        usdc.transferFrom(msg.sender, address(this), amount);
+        balance += amount;
+
+        //TODO add yield generating here -> Aave or something similar
+        emit Deposited(amount);
+
+    }
+
+    function withdraw(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
+        //TODO add check to state machine (cannot be called after payout has happened)
+        require(amount > 0, "Amount has to be greater than zero.");
+        require(balance >= amount, "Insufficient balance");
+
+        balance -= amount;
+
+        usdc.transfer(msg.sender, amount);
+        emit Withdrawn(amount);
+    }
+
     /// ---------- HELPER METHODS ----------
 
     function isPayoutFullyDetermined() public view returns (bool) {
@@ -171,6 +213,10 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
             }
         }
         return sum;
+    }
+
+    function getBalance() public view returns (uint256) {
+        return balance; // If using Aave this might not work anymore
     }
 
 }
