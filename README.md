@@ -1,6 +1,12 @@
-# decentralized inheritance protocol
+# Decentralized inheritance protocol
 
-## roadmap
+## Referenced Documents
+
+* [CONTRIBUTING](CONTRIBUTING.md)
+* [License](LICENSE.md)
+* [Description](description.txt)
+
+## Roadmap
 
 not definitive and not in-order.  
 
@@ -20,16 +26,10 @@ not definitive and not in-order.
   - [ ] Implemented
   - [ ] Tested
 
-## hardhat version
+## Hardhat version
 
 This project uses hardhat v3. See the [documentation](https://hardhat.org/docs/getting-started).
 
-## styleguide
+## Styleguide
 
 Usage of [NatSpec](https://docs.soliditylang.org/en/latest/natspec-format.html) style comments is encouraged.
-
-## links
-
-* [Project Description](description.txt)
-* [Contributing](CONTRIBUTING.md)
-* [License](LICENSE.md)
