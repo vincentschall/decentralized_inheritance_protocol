@@ -9,16 +9,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     IERC20 public immutable usdc;
 
     /**
-     * Defines the state of the contract.
-     *  - Active: mutable state, owner check-ins required.
-     *  - Warning: Missed check-in, notification sent at 90 days,
-     *    verification phase starts at 120 days.
-     *  - Verification: submission of death certificate (30 days).
-     *  - Distribution: distribute assets based on defined conditions.
-     */
-    enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
-
-    /**
      * Stores address and payout percentage amount (0-100) of a beneficiary.
      */
     struct Beneficiary {
@@ -52,15 +42,20 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /// ---------- State Machine ----------------
 
-    enum State {
-        ACTIVE,
-        Warning,
-        VERIFICATION,
-        DISTRIBUTION
-    }
+    /**
+     * Defines the state of the contract.
+     *  - Active: mutable state, owner check-ins required.
+     *  - Warning: Missed check-in, notification sent at 90 days,
+     *    verification phase starts at 120 days.
+     *  - Verification: submission of death certificate (30 days).
+     *  - Distribution: distribute assets based on defined conditions.
+     */
+    enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
+
 
     modifier onlyPreDistribution() {
         require(currentState < State.DISTRIBUTION, "Cannot modify funds post-distribution");
+        _;
     }
 
     /// ---------- BENEFICIARY HANDLING ----------
