@@ -34,6 +34,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     event BeneficiaryAdded(address indexed payoutAddress, uint256 amount, uint256 index);
     event BeneficiaryRemoved(address indexed payoutAddress, uint256 index);
+    event Deposited(uint256 amount);
+    event Withdrawn(uint256 amount);
 
     /**
      * Initializes a new InheritanceProtocol.
