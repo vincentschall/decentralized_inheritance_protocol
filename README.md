@@ -16,8 +16,8 @@ not definitive and not in-order.
     - [x] Implemented
     - [x] Tested
 - **Transferring and withdrawing assets (use mock USDC)**
-    - [ ] Implemented
-    - [ ] Tested
+    - [x] Implemented
+    - [x] Tested
 - **State handling: check-ins (liveness proof with timer reset)**
     - [ ] Implemented
     - [ ] Tested
