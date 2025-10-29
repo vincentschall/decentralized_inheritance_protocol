@@ -12,4 +12,13 @@
 
 # Project Structure
 
-tbd
+- /contract  
+Contains hardhat project (v3).
+    - /contracts
+    Solidity Files
+    - /test
+    Typescript test
+    - /scripts
+    Scripts for deploying contracts
+- /client  
+Web dApp (framework tbd)
