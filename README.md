@@ -32,7 +32,7 @@ not definitive and not in-order.
     - [ ] Tested
 
 ### Yield and Vesting Integration
-- **Yield generation (mock with simple accrual formula or Aave stub on testnet)**
+- **Yield generation**
     - [ ] Implemented
     - [ ] Tested
 - **Vesting contract (time-locked claims for beneficiaries with unlock schedules)**
@@ -42,35 +42,9 @@ not definitive and not in-order.
     - [ ] Implemented
     - [ ] Tested
 
-### Factory and Multi-User Support
-- **InheritanceFactory contract (deploy per-user Core instances with createInheritance)**
-    - [ ] Implemented
-    - [ ] Tested
-- **User interaction views (getUserInheritance, getState, timeUntilNextCheckIn)**
-    - [ ] Implemented
-    - [ ] Tested
-
-### Testing and Deployment
-- **Unit tests (per function: e.g., addBeneficiary overflow, checkIn resets)**
-    - [ ] Implemented
-- **Integration tests (full flow: setup → check-in → simulate death → payout → claim vesting)**
-    - [ ] Implemented
-- **Edge case tests (false alarm challenge, partial percentages, max beneficiaries)**
-    - [ ] Implemented
-- **Gas optimization and static analysis (optimize loops, run Slither)**
-    - [ ] Performed
-- **Deployment to local Hardhat and Sepolia testnet (with mock USDC funding)**
-    - [ ] Completed
-- **E2E demo script (Hardhat task for end-to-end simulation)**
-    - [ ] Implemented
-- **Documentation (README with flows, ABI, and setup instructions)**
-    - [ ] Updated
-
 ### Client / UX
-- **Interaction with Factory Contract (Deployment of Inheritance contract, View functionality)**
-  - [ ] Implemented
-- **Interaction with Deployed InheritanceProtocol contract (Deposit, Withdraw, Yield / View account, Beneficiary Management, CheckIns, Death verification)**
-  - [ ] Implemented
+- [ ] **Basic setup: view functionality**
+- [ ] **Interaction with Deployed InheritanceProtocol contract (Deposit, Withdraw, Yield / View account, Beneficiary Management, CheckIns, Death verification)**
 
 ## Hardhat version
 
