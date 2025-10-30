@@ -40,7 +40,17 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         currentState = State.ACTIVE;
     }
 
-    /// ---------- State Machine ----------------
+    /// ---------- MODIFIERS ----------
+
+    /**
+     * This modifier requires the function call to be made before distribution.
+     */
+    modifier onlyPreDistribution() {
+        require(currentState < State.DISTRIBUTION, "Cannot modify funds post-distribution");
+        _;
+    }
+
+    /// ---------- STATE MACHINE ----------
 
     /**
      * Defines the state of the contract.
@@ -52,30 +62,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      */
     enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
 
-
-    modifier onlyPreDistribution() {
-        require(currentState < State.DISTRIBUTION, "Cannot modify funds post-distribution");
-        _;
-    }
-
     /// ---------- BENEFICIARY HANDLING ----------
-
-    /**
-     * Gets only the active beneficiaries.
-     * @return an array of beneficiaries.
-     */
-    function getActiveBeneficiaries() public view returns (Beneficiary[] memory) {
-        uint256 activeCount = getActiveCount();
-        Beneficiary[] memory active = new Beneficiary[](activeCount);
-        uint256 count = 0;
-        for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress != address(0)) {
-                active[count] = beneficiaries[i];
-                count++;
-            }
-        }
-        return active;
-    }
 
     /**
      * Removes a beneficiary with a given address.
@@ -154,24 +141,14 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return true;
     }
 
-    function getBeneficiaries() public view returns (Beneficiary[10] memory) {
-        return beneficiaries;
-    }
 
-    function getActiveCount() public view returns (uint256) {
-        uint256 count;
-        for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress != address(0)) {
-                count++;
-            }
-        }
-        return count;
-    }
 
-    /// ---------- Owner Functions ----------
+    /// ---------- BALANCE HANDLING ----------
 
+    /**
+     * Deposits a given amount of USDC.
+     */
     function deposit(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
-        //TODO add check to state machine (cannot be called after payout has happened)
         require(amount > 0, "Amount has to be greater than zero.");
 
         usdc.transferFrom(msg.sender, address(this), amount);
@@ -182,8 +159,10 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     }
 
+    /**
+     * Withdraws a given amount of USDC.
+     */
     function withdraw(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
-        //TODO add check to state machine (cannot be called after payout has happened)
         require(amount > 0, "Amount has to be greater than zero.");
         require(balance >= amount, "Insufficient balance");
 
@@ -193,13 +172,20 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         emit Withdrawn(amount);
     }
 
-    /// ---------- HELPER METHODS ----------
+    /// ---------- VIEW METHODS ----------
 
+    /**
+     * Checks if the currently defined payout is fully determined, meaning
+     * 100% of the balance is being spent.
+     */
     function isPayoutFullyDetermined() public view returns (bool) {
         uint256 sum = getDeterminedPayoutPercentage();
         return sum == MAX_PERCENTAGE;
     }
 
+    /**
+     * Calculates the percentage amount of currently determined payout.
+     */
     function getDeterminedPayoutPercentage() public view returns (uint256) {
         uint256 sum;
         for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
@@ -210,8 +196,48 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return sum;
     }
 
+    /**
+     * Gets the current balance.
+     */
     function getBalance() public view returns (uint256) {
         return balance; // If using Aave this might not work anymore
+    }
+
+    /**
+     * Getter for the beneficiaries list.
+     */
+    function getBeneficiaries() public view returns (Beneficiary[10] memory) {
+        return beneficiaries;
+    }
+
+    /**
+     * Counts the number of active beneficiaries.
+     */
+    function getActiveCount() public view returns (uint256) {
+        uint256 count;
+        for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
+            if (beneficiaries[i].payoutAddress != address(0)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Gets only the active beneficiaries.
+     * @return an array of beneficiaries.
+     */
+    function getActiveBeneficiaries() public view returns (Beneficiary[] memory) {
+        uint256 activeCount = getActiveCount();
+        Beneficiary[] memory active = new Beneficiary[](activeCount);
+        uint256 count = 0;
+        for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
+            if (beneficiaries[i].payoutAddress != address(0)) {
+                active[count] = beneficiaries[i];
+                count++;
+            }
+        }
+        return active;
     }
 
 }
