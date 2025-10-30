@@ -148,31 +148,31 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Deposits a given amount of USDC.
-     * @param the amount to deposit.
+     * @param _amount the amount to deposit.
      */
-    function deposit(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
-        require(amount > 0, "Amount has to be greater than zero.");
+    function deposit(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution{
+        require(_amount > 0, "Amount has to be greater than zero.");
 
-        usdc.transferFrom(msg.sender, address(this), amount);
-        balance += amount;
+        usdc.transferFrom(msg.sender, address(this), _amount);
+        balance += _amount;
 
         //TODO add yield generating here -> Aave or something similar
-        emit Deposited(amount);
+        emit Deposited(_amount);
 
     }
 
     /**
      * Withdraws a given amount of USDC.
-     * @param the amout to withdraw.
+     * @param _amount the amount to withdraw.
      */
-    function withdraw(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
-        require(amount > 0, "Amount has to be greater than zero.");
-        require(balance >= amount, "Insufficient balance");
+    function withdraw(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution{
+        require(_amount > 0, "Amount has to be greater than zero.");
+        require(balance >= _amount, "Insufficient balance");
 
-        balance -= amount;
+        balance -= _amount;
 
-        usdc.transfer(msg.sender, amount);
-        emit Withdrawn(amount);
+        usdc.transfer(msg.sender, _amount);
+        emit Withdrawn(_amount);
     }
 
     /// ---------- VIEW METHODS ----------
