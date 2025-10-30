@@ -106,12 +106,12 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      *  - List not full
      *  - Payout after adding <= 100
      * @param _address the address to add to the list.
-     * @param amount the payout amount related to this address.
+     * @param _amount the payout amount related to this address.
      * @return true if the addition was successful, false otherwise.
      */
-    function addBeneficiary(address _address, uint256 amount) public onlyOwner returns (bool) {
+    function addBeneficiary(address _address, uint256 _amount) public onlyOwner returns (bool) {
         require(_address != address(0), "Invalid address");
-        require(amount > 0 && amount <= MAX_PERCENTAGE, "Invalid amount");
+        require(_amount > 0 && _amount <= MAX_PERCENTAGE, "Invalid amount");
 
         // Check for duplicate
         if (findBeneficiaryIndex(_address) != NOT_FOUND) {
@@ -119,7 +119,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         }
 
         uint256 currentSum = getDeterminedPayoutPercentage();
-        if (currentSum + amount > MAX_PERCENTAGE) {
+        if (currentSum + _amount > MAX_PERCENTAGE) {
             // it should not be possible to payout more than 100%
             return false;
         }
@@ -137,8 +137,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
             return false; // Max beneficiaries reached
         }
 
-        beneficiaries[emptyIndex] = Beneficiary({ payoutAddress: _address, amount: amount });
-        emit BeneficiaryAdded(_address, amount, emptyIndex);
+        beneficiaries[emptyIndex] = Beneficiary({ payoutAddress: _address, amount: _amount });
+        emit BeneficiaryAdded(_address, _amount, emptyIndex);
         return true;
     }
 
