@@ -148,6 +148,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Deposits a given amount of USDC.
+     * @param the amount to deposit.
      */
     function deposit(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
         require(amount > 0, "Amount has to be greater than zero.");
@@ -162,6 +163,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Withdraws a given amount of USDC.
+     * @param the amout to withdraw.
      */
     function withdraw(uint256 amount) external onlyOwner nonReentrant onlyPreDistribution{
         require(amount > 0, "Amount has to be greater than zero.");
@@ -178,6 +180,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     /**
      * Checks if the currently defined payout is fully determined, meaning
      * 100% of the balance is being spent.
+     * @return true if the full balance will be spent, false otherwise.
      */
     function isPayoutFullyDetermined() public view returns (bool) {
         uint256 sum = getDeterminedPayoutPercentage();
@@ -186,6 +189,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Calculates the percentage amount of currently determined payout.
+     * @return a number between 0 and 100, equivalent to the combined relative payout.
      */
     function getDeterminedPayoutPercentage() public view returns (uint256) {
         uint256 sum;
@@ -199,6 +203,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Gets the current balance.
+     * @return the balance of the combined deposited funds.
      */
     function getBalance() public view returns (uint256) {
         return balance; // If using Aave this might not work anymore
@@ -206,6 +211,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Getter for the beneficiaries list.
+     * @return the list of 10 beneficiaries (might contain empty slots).
      */
     function getBeneficiaries() public view returns (Beneficiary[10] memory) {
         return beneficiaries;
@@ -213,6 +219,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Counts the number of active beneficiaries.
+     * @return the number of active beneficiaries.
      */
     function getActiveCount() public view returns (uint256) {
         uint256 count;
