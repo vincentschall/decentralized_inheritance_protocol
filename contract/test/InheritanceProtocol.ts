@@ -88,6 +88,21 @@ describe("Inheritance Protocol", function () {
             }
         }
 
+        async function setup10Beneficiaries() {
+            await setupBeneficiaries([
+                { address: beneficiary1, amount: 10n },
+                { address: beneficiary2, amount: 10n },
+                { address: beneficiary3, amount: 10n },
+                { address: beneficiary4, amount: 10n },
+                { address: beneficiary5, amount: 10n },
+                { address: beneficiary6, amount: 10n },
+                { address: beneficiary7, amount: 10n },
+                { address: beneficiary8, amount: 10n },
+                { address: beneficiary9, amount: 10n },
+                { address: beneficiary10, amount: 10n }
+            ]);
+        }
+
         describe("Adding beneficiaries", function () {
             it("Should allow adding a single valid beneficiary", async function () {
                 const initialCount = await inheritanceProtocol.getActiveCount();
@@ -115,18 +130,7 @@ describe("Inheritance Protocol", function () {
             it("Should allow adding exactly 10 beneficiaries", async function () {
                 const initialCount = await inheritanceProtocol.getActiveCount();
                 const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
-                await setupBeneficiaries([
-                    { address: beneficiary1, amount: 10n },
-                    { address: beneficiary2, amount: 10n },
-                    { address: beneficiary3, amount: 10n },
-                    { address: beneficiary4, amount: 10n },
-                    { address: beneficiary5, amount: 10n },
-                    { address: beneficiary6, amount: 10n },
-                    { address: beneficiary7, amount: 10n },
-                    { address: beneficiary8, amount: 10n },
-                    { address: beneficiary9, amount: 10n },
-                    { address: beneficiary10, amount: 10n }
-                ]);
+                await setup10Beneficiaries();
                 expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 10n);
                 expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 100n);
             });
@@ -182,19 +186,7 @@ describe("Inheritance Protocol", function () {
             it("Should reject adding when list is full (10 beneficiaries)", async function () {
                 const initialCount = await inheritanceProtocol.getActiveCount();
                 const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
-
-                await setupBeneficiaries([
-                    { address: beneficiary1, amount: 10n },
-                    { address: beneficiary2, amount: 10n },
-                    { address: beneficiary3, amount: 10n },
-                    { address: beneficiary4, amount: 10n },
-                    { address: beneficiary5, amount: 10n },
-                    { address: beneficiary6, amount: 10n },
-                    { address: beneficiary7, amount: 10n },
-                    { address: beneficiary8, amount: 10n },
-                    { address: beneficiary9, amount: 10n },
-                    { address: beneficiary10, amount: 10n }
-                ]);
+                await setup10Beneficiaries();
 
                 const tx = await inheritanceProtocol.addBeneficiary(addrs[0].address, 5n);
                 await expect(tx).to.not.emit(inheritanceProtocol, "BeneficiaryAdded");
