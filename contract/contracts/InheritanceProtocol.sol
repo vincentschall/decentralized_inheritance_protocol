@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract InheritanceProtocol is Ownable, ReentrancyGuard {
+
     IERC20 public immutable usdc;
 
     /**
