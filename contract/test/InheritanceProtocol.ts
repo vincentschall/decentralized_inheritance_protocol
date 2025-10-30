@@ -185,7 +185,6 @@ describe("Inheritance Protocol", function () {
 
             it("Should reject adding when list is full (10 beneficiaries)", async function () {
                 const initialCount = await inheritanceProtocol.getActiveCount();
-                const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
                 await setup10Beneficiaries();
 
                 const tx = await inheritanceProtocol.addBeneficiary(addrs[0].address, 5n);
