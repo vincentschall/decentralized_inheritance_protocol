@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ZeroAddress } from "ethers";
 import hre from "hardhat";
 import type { InheritanceProtocol, MockUSDC } from "../types/ethers-contracts/index.js";
+import {CheckedInEvent} from "../types/ethers-contracts/InheritanceProtocol.sol/InheritanceProtocol.js";
 
 let connectedEthers: Awaited<ReturnType<typeof hre.network.connect>>['ethers'];
 
@@ -538,6 +539,39 @@ describe("Inheritance Protocol", function () {
                 await inheritanceProtocol.deposit(DEPOSIT_AMOUNT);
                 expect(await inheritanceProtocol.getBalance()).to.equal(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress()));
             });
+        });
+    });
+
+    describe("Check-ins and state machine", function (){
+        const CHECK_IN_PERIOD = 90n * 24n * 60n * 60n;
+        const GRACE_PERIOD = 30n * 24n * 60n * 60n;
+
+        describe("Initial check-in state", function () {
+            it("Should set last check-in time to deployment time", async function () {
+                const lastCheckInTime = await inheritanceProtocol.getLastCheckIn();
+                const currentBlock = await connectedEthers.provider.getBlock('latest');
+                expect(lastCheckInTime).to.be.closeTo(BigInt(currentBlock!.timestamp), 5n);
+            });
+
+            it("Should start in active state", async function () {
+                const state = await inheritanceProtocol.getState();
+                expect(state).to.equal(0);
+            });
+        });
+
+        describe("Check-ins in active state", function () {
+
+            it("Should allow owner to check in", async function () {
+                const { networkHelpers } = await hre.network.connect();
+                const initialCheckIn = await inheritanceProtocol.getLastCheckIn();
+                const timeSkip = 10n * 24n * 60n * 60n; // 10 days
+                await networkHelpers.time.increase(timeSkip);
+                const tx = await inheritanceProtocol.checkIn();
+                await expect(tx).to.emit(inheritanceProtocol, "CheckedIn");
+                const newCheckInTime = await inheritanceProtocol.getLastCheckIn();
+                expect(newCheckInTime).to.be.gt(initialCheckIn);
+            });
+
         });
     });
 });
