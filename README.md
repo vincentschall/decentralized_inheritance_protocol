@@ -19,7 +19,7 @@ not definitive and not in-order.
     - [x] Implemented
     - [x] Tested
 - **State handling: check-ins (liveness proof with timer reset)**
-    - [ ] Implemented
+    - [x] Implemented
     - [ ] Tested
 - **State handling: phase transitions (Active → Warning → Verification → Distribution)**
     - [ ] Implemented
