@@ -79,9 +79,18 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         emit CheckedIn(block.timestamp);
         lastCheckIn = block.timestamp;
         if (currentState == State.WARNING) {
-            emit StateChanged(block.timestamp, State.WARNING, State.ACTIVE);
-            currentState = State.ACTIVE;
+            changeState(State.ACTIVE);
         }
+    }
+
+    /**
+     * Changes the state of the contract to a given state.
+     * @param to the state to change to.
+     */
+    function changeState (State to) public {
+        require(to != currentState, "Already in requested state");
+        emit StateChanged(block.timestamp, currentState, to);
+        currentState = to;
     }
 
     /// ---------- BENEFICIARY HANDLING ----------
