@@ -22,7 +22,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     uint256 private balance;
     State private currentState;
 
-    uint256 public lastCheckIn;
+    uint256 private lastCheckIn;
 
     uint256 private constant NOT_FOUND = type(uint256).max;
     uint256 private constant MAX_BENEFICIARIES = 10;
@@ -275,6 +275,14 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      */
     function getState() public view returns (State) {
         return currentState;
+    }
+
+    /**
+     * Gets the last check-in time.
+     * @return the last check-in time.
+     */
+    function getLastCheckIn() public view returns (uint256) {
+        return lastCheckIn;
     }
 
 }
