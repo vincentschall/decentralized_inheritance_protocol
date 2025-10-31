@@ -22,14 +22,20 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     uint256 private balance;
     State private currentState;
 
+    uint256 public lastCheckIn;
+
     uint256 private constant NOT_FOUND = type(uint256).max;
     uint256 private constant MAX_BENEFICIARIES = 10;
     uint256 private constant MAX_PERCENTAGE = 100;
+    uint256 private constant CHECK_IN_PERIOD = 90 * 1 days;
+    uint256 private constant GRACE_PERIOD = 30 * 1 days;
 
     event BeneficiaryAdded(address indexed payoutAddress, uint256 amount, uint256 index);
     event BeneficiaryRemoved(address indexed payoutAddress, uint256 index);
     event Deposited(uint256 amount);
     event Withdrawn(uint256 amount);
+    event CheckedIn(uint256 timestamp);
+    event StateChanged(uint256 timestamp, State from, State to);
 
     /**
      * Initializes a new InheritanceProtocol.
@@ -39,6 +45,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         require(_usdcAddress != address(0), "USDC address zero");
         usdc = IERC20(_usdcAddress);
         currentState = State.ACTIVE;
+        lastCheckIn = block.timestamp;
     }
 
     /// ---------- MODIFIERS ----------
@@ -51,7 +58,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         _;
     }
 
-    /// ---------- STATE MACHINE ----------
+    /// ---------- STATE MACHINE & CHECK-INS ----------
 
     /**
      * Defines the state of the contract.
@@ -62,6 +69,20 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      *  - Distribution: distribute assets based on defined conditions.
      */
     enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
+
+    /**
+     * The owner checks in to verify that he's alive.
+     * Should be possible in active and warning state.
+     */
+    function checkIn() external onlyOwner {
+        require(currentState == State.ACTIVE || currentState == State.WARNING, "Need to be in active or warning state");
+        emit CheckedIn(block.timestamp);
+        lastCheckIn = block.timestamp;
+        if (currentState == State.WARNING) {
+            emit StateChanged(block.timestamp, State.WARNING, State.ACTIVE);
+            currentState = State.ACTIVE;
+        }
+    }
 
     /// ---------- BENEFICIARY HANDLING ----------
 
