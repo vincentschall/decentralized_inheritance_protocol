@@ -269,4 +269,12 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return active;
     }
 
+    /**
+     * Gets the current state of the contract.
+     * @return the current state.
+     */
+    function getState() public view returns (State) {
+        return currentState;
+    }
+
 }
