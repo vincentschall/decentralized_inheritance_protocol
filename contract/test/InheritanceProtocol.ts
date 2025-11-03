@@ -37,9 +37,13 @@ describe("Inheritance Protocol", function () {
         const MockUSDCFactory = await connectedEthers.getContractFactory("MockUSDC");
         mockUSDC = await MockUSDCFactory.deploy();
 
+        const MockDeathOracle = await connectedEthers.getContractFactory("MockDeathOracle");
+        mockDeathOracle = await MockDeathOracle.deploy();
+
         const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
         inheritanceProtocol = await InheritanceProtocolFactory.deploy(
-            await mockUSDC.getAddress()
+            await mockUSDC.getAddress(),
+            await mockDeathOracle.getAddress()
         );
 
         await mockUSDC.mint(owner.address, INITIAL_USDC_BALANCE);
@@ -48,9 +52,6 @@ describe("Inheritance Protocol", function () {
             await inheritanceProtocol.getAddress(),
             2n ** 256n - 1n
         );
-
-        const MockDeathOracle = await connectedEthers.getContractFactory("MockDeathOracle");
-        mockDeathOracle = await MockDeathOracle.deploy();
     });
 
     describe("Deployment", function () {

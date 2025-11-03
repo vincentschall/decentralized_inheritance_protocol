@@ -4,10 +4,12 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {IDeathOracle} from "./IDeathOracle.sol";
 
 contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     IERC20 public immutable usdc;
+    IDeathOracle public immutable deathOracle;
 
     /**
      * Stores address and payout percentage amount (0-100) of a beneficiary.
@@ -41,9 +43,11 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Initializes a new InheritanceProtocol.
      * @param _usdcAddress address of the currency used (non-zero).
      */
-    constructor(address _usdcAddress) Ownable(msg.sender) {
+    constructor(address _usdcAddress, address _deathOracleAddress) Ownable(msg.sender) {
         require(_usdcAddress != address(0), "USDC address zero");
+        require(_deathOracleAddress != address(0), "Death Oracle address zero");
         usdc = IERC20(_usdcAddress);
+        deathOracle = IDeathOracle(_deathOracleAddress);
         currentState = State.ACTIVE;
         lastCheckIn = block.timestamp;
     }
@@ -203,6 +207,16 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
         usdc.transfer(msg.sender, _amount);
         emit Withdrawn(_amount);
+    }
+
+    /// ---------- DEATH CERTIFICATION ----------
+
+    /**
+     * Checks if the owner died by calling death certificate oracle.
+     * @return true if the owner died, else otherwise.
+     */
+    function checkIfOwnerDied() public view returns (bool) {
+        return deathOracle.isDeceased(owner());
     }
 
     /// ---------- VIEW METHODS ----------
