@@ -582,9 +582,14 @@ describe("Inheritance Protocol", function () {
     describe("Mocking death oracles", function () {
 
         it("Should allow recording deaths", async function () {
+            const proof = "0xabcdabcd";
             // I used beneficiary address here, so I don't have to set up new test addresses
-            const tx = await mockDeathOracle.setDeathStatus(beneficiary1.getAddress(), true, "0xabcdabcd")
-            await expect(tx).to.emit(mockDeathOracle, "DeathRecorded");
+            const address = await beneficiary1.getAddress();
+            await expect(
+                mockDeathOracle.setDeathStatus(address, true, proof)
+            ).to.emit(mockDeathOracle, "DeathRecorded");
+            expect(await mockDeathOracle.isDeceased(address)).to.be.true;
+            expect(await mockDeathOracle.getProof(address)).to.equal(proof);
         });
 
     });
