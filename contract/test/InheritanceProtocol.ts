@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { ZeroAddress } from "ethers";
 import hre from "hardhat";
 import type { InheritanceProtocol, MockUSDC } from "../types/ethers-contracts/index.js";
-import {CheckedInEvent} from "../types/ethers-contracts/InheritanceProtocol.sol/InheritanceProtocol.js";
 
 let connectedEthers: Awaited<ReturnType<typeof hre.network.connect>>['ethers'];
 
