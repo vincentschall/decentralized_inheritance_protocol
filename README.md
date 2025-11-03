@@ -26,7 +26,7 @@ not definitive and not in-order.
     - [ ] Tested
 - **Verification phase: mocking death certificates**
     - [x] Implemented
-    - [ ] Tested
+    - [x] Tested
 - **Payout logic (trigger distribution with percentage-based shares)**
     - [ ] Implemented
     - [ ] Tested
