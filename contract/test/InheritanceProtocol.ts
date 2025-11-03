@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ZeroAddress } from "ethers";
 import hre from "hardhat";
-import type { InheritanceProtocol, MockUSDC } from "../types/ethers-contracts/index.js";
+import type { InheritanceProtocol, MockUSDC, MockDeathOracle } from "../types/ethers-contracts/index.js";
 
 let connectedEthers: Awaited<ReturnType<typeof hre.network.connect>>['ethers'];
 
@@ -21,6 +21,8 @@ describe("Inheritance Protocol", function () {
     let beneficiary8: SignerType;
     let beneficiary9: SignerType;
     let beneficiary10: SignerType;
+
+    let mockDeathOracle: MockDeathOracle;
 
     const USDC_DECIMALS = 6;
     const INITIAL_USDC_BALANCE = 10000n * (10n ** BigInt(USDC_DECIMALS));
@@ -46,6 +48,9 @@ describe("Inheritance Protocol", function () {
             await inheritanceProtocol.getAddress(),
             2n ** 256n - 1n
         );
+
+        const MockDeathOracle = await connectedEthers.getContractFactory("MockDeathOracle");
+        mockDeathOracle = await MockDeathOracle.deploy();
     });
 
     describe("Deployment", function () {
@@ -572,5 +577,15 @@ describe("Inheritance Protocol", function () {
             });
 
         });
+    });
+
+    describe("Mocking death oracles", function () {
+
+        it("Should allow recording deaths", async function () {
+            // I used beneficiary address here, so I don't have to set up new test addresses
+            const tx = await mockDeathOracle.setDeathStatus(beneficiary1.getAddress(), true, "0xabcdabcd")
+            await expect(tx).to.emit(mockDeathOracle, "DeathRecorded");
+        });
+
     });
 });

@@ -6,7 +6,7 @@ import "./IDeathOracle.sol";
 /**
  * Mocking a death certificate oracle.
  * usage in tests:
- * mockOracle.setDeathStatus(owner, true, "0xwasdfaef")
+ * mockOracle.setDeathStatus(owner, true, "0xabcdabcd") // proof has to be any valid hex code
  * usage in contract:
  * address _oracle;
  * oracle = IDeathOracle(_oracle);
