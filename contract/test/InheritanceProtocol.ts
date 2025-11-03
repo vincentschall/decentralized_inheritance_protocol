@@ -592,5 +592,11 @@ describe("Inheritance Protocol", function () {
             expect(await mockDeathOracle.getProof(address)).to.equal(proof);
         });
 
+        it("Should correctly determine alive state", async function () {
+            const address = await beneficiary1.getAddress();
+            // test address without certifying death beforehand
+            expect(await mockDeathOracle.isDeceased(address)).to.be.false;
+        });
+
     });
 });
