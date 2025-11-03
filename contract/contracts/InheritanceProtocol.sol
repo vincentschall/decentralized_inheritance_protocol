@@ -230,18 +230,22 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      */
     function distributePayout() public onlyOwner {
         uint256 count = getActiveCount();
-        Beneficiary[] memory beneficiaries = getActiveBeneficiaries();
+        Beneficiary[] memory activeBeneficiaries = getActiveBeneficiaries();
+        uint256 originalBalance = balance;
         for (uint256 i=0; i<count; i++) {
-            Beneficiary memory beneficiary = beneficiaries[i];
+            Beneficiary memory beneficiary = activeBeneficiaries[i];
             uint256 amount = beneficiary.amount;
             address payoutAddress = beneficiary.payoutAddress;
+
+            uint actualAmount = (originalBalance * amount) / MAX_PERCENTAGE;
+
             // decision made: change balance value (should be 0 at the end)
             // pros: good for checking / testing
-            // cons: I just realised there are probably no cons
-            balance -= amount;
+            // cons: just setting it to 0 would be less error-prone
+            balance -= actualAmount;
 
-            usdc.transfer( payoutAddress, amount);
-            emit PayoutMade(amount, payoutAddress);
+            usdc.transfer( payoutAddress, actualAmount);
+            emit PayoutMade(actualAmount, payoutAddress);
         }
     }
 

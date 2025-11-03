@@ -604,4 +604,40 @@ describe("Inheritance Protocol", function () {
         });
 
     });
+
+    describe("Payouts", function () {
+        const DEPOSIT_AMOUNT = 1000n * 10n ** 6n;
+
+        beforeEach(async function () {
+            await mockUSDC.mint(owner.address, DEPOSIT_AMOUNT);
+            await mockUSDC.connect(owner).approve(await inheritanceProtocol.getAddress(), DEPOSIT_AMOUNT);
+
+            // Deposit funds
+            await inheritanceProtocol.deposit(DEPOSIT_AMOUNT);
+
+            // Add beneficiaries
+            await inheritanceProtocol.addBeneficiary(beneficiary1.address, 50n); // 50%
+            await inheritanceProtocol.addBeneficiary(beneficiary2.address, 50n); // 50%
+        });
+
+        it("Should distribute funds correctly", async function () {
+            const balanceBefore1 = await mockUSDC.balanceOf(beneficiary1.address);
+            const balanceBefore2 = await mockUSDC.balanceOf(beneficiary2.address);
+
+            const tx = await inheritanceProtocol.distributePayout();
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade");
+
+            const balanceAfter1 = await mockUSDC.balanceOf(beneficiary1.address);
+            const balanceAfter2 = await mockUSDC.balanceOf(beneficiary2.address);
+
+            // Verify 50% of contract balance each
+            expect(balanceAfter1 - balanceBefore1).to.equal(DEPOSIT_AMOUNT / 2n);
+            expect(balanceAfter2 - balanceBefore2).to.equal(DEPOSIT_AMOUNT / 2n);
+
+            // Contract balance should now be 0
+            expect(await inheritanceProtocol.getBalance()).to.equal(0n);
+        });
+
+    });
+
 });
