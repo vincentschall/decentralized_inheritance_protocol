@@ -84,6 +84,10 @@ describe("Inheritance Protocol", function () {
         it("Should define that the payout is not fully determined", async function () {
             expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.equal(false);
         });
+
+        it("Should determine that the owner has not died", async function () {
+            expect(await inheritanceProtocol.checkIfOwnerDied()).to.be.false;
+        })
     });
 
     describe("Beneficiary handling helpers", function () {
