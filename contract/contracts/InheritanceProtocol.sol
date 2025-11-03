@@ -38,6 +38,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     event Withdrawn(uint256 amount);
     event CheckedIn(uint256 timestamp);
     event StateChanged(uint256 timestamp, State from, State to);
+    event PayoutMade(uint256 amount, address payoutAddress);
 
     /**
      * Initializes a new InheritanceProtocol.
@@ -217,6 +218,31 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      */
     function checkIfOwnerDied() public view returns (bool) {
         return deathOracle.isDeceased(owner());
+    }
+
+    /// ---------- DISTRIBUTION METHODS ----------
+
+    /**
+     * Distributes the payout based on definitions given by owner.
+     * note: this is onlyOwner for now. in future we will adapt based on the decision making
+     * regarding automatic payouts and state machine. should maybe become private or only
+     * callable from a certain address.
+     */
+    function distributePayout() public onlyOwner {
+        uint256 count = getActiveCount();
+        Beneficiary[] memory beneficiaries = getActiveBeneficiaries();
+        for (uint256 i=0; i<count; i++) {
+            Beneficiary memory beneficiary = beneficiaries[i];
+            uint256 amount = beneficiary.amount;
+            address payoutAddress = beneficiary.payoutAddress;
+            // decision made: change balance value (should be 0 at the end)
+            // pros: good for checking / testing
+            // cons: I just realised there are probably no cons
+            balance -= amount;
+
+            usdc.transfer( payoutAddress, amount);
+            emit PayoutMade(amount, payoutAddress);
+        }
     }
 
     /// ---------- VIEW METHODS ----------
