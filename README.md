@@ -24,8 +24,8 @@ not definitive and not in-order.
 - **State handling: phase transitions (Active → Warning → Verification → Distribution)**
     - [ ] Implemented
     - [ ] Tested
-- **Verification phase: mocking death certificates (trusted contacts with signature mocks via ecrecover)**
-    - [ ] Implemented
+- **Verification phase: mocking death certificates**
+    - [x] Implemented
     - [ ] Tested
 - **Payout logic (trigger distribution with percentage-based shares)**
     - [ ] Implemented
