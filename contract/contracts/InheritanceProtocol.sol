@@ -101,34 +101,29 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      */
     function updateState() public returns (State) {
         uint256 elapsed = uint256(block.timestamp) - _lastCheckIn;
-        State newState = _currentState;
+        State oldState = _currentState;
 
         // --- Phase transitions in logical order ---
 
         // If in ACTIVE and check-in expired → WARNING
-        if (newState == State.ACTIVE && elapsed > CHECK_IN_PERIOD) {
-            newState = State.WARNING;
+        if (_currentState == State.ACTIVE && elapsed > CHECK_IN_PERIOD) {
+            _currentState = State.WARNING;
         }
 
         // If in WARNING and grace period expired → VERIFICATION
-        if (newState == State.WARNING && elapsed > CHECK_IN_PERIOD + GRACE_PERIOD) {
-            newState = State.VERIFICATION;
+        if (_currentState == State.WARNING && elapsed > CHECK_IN_PERIOD + GRACE_PERIOD) {
+            _currentState = State.VERIFICATION;
         }
 
         // If in VERIFICATION and death confirmed → DISTRIBUTION
-        if (newState == State.VERIFICATION && deathOracle.isDeceased(owner())) {
-            newState = State.DISTRIBUTION;
+        if (_currentState == State.VERIFICATION && deathOracle.isDeceased(owner())) {
+            _currentState = State.DISTRIBUTION;
         }
 
-        emit StateChanged(block.timestamp, _currentState, newState);
-
-        // --- Apply new state and side effects ---
-        if (newState != _currentState) {
-            _currentState = newState;
-        }
+        emit StateChanged(block.timestamp, oldState, _currentState);
 
         // Trigger payout if we reached DISTRIBUTION
-        if (newState == State.DISTRIBUTION) {
+        if (_currentState == State.DISTRIBUTION) {
             distributePayout();
         }
 

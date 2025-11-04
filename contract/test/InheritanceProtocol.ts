@@ -571,10 +571,12 @@ describe("Inheritance Protocol", function () {
         describe("Check-ins in active state", function () {
 
             it("Should allow owner to check in", async function () {
-                const {networkHelpers} = await hre.network.connect();
-                const initialCheckIn = await inheritanceProtocol.getLastCheckIn();
+                // Increase time by 10 days using EVM helpers
                 const timeSkip = 10n * 24n * 60n * 60n; // 10 days
-                await networkHelpers.time.increase(timeSkip);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(timeSkip)]);
+                await connectedEthers.provider.send("evm_mine", []);
+
+                const initialCheckIn = await inheritanceProtocol.getLastCheckIn();
                 const tx = await inheritanceProtocol.checkIn();
                 await expect(tx).to.emit(inheritanceProtocol, "CheckedIn");
                 const newCheckInTime = await inheritanceProtocol.getLastCheckIn();
@@ -622,7 +624,6 @@ describe("Inheritance Protocol", function () {
 // typescript
 // --- Replace the empty test in your existing `describe("Payouts", ...)` with this ---
         it("Should distribute funds correctly", async function () {
-            const {networkHelpers} = await hre.network.connect();
             const oneDay = 24n * 60n * 60n;
             const contractAddress = await inheritanceProtocol.getAddress();
 
@@ -636,7 +637,8 @@ describe("Inheritance Protocol", function () {
             await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
 
             // Advance time: > 90d + 30d (strict ">" in contract), then update once
-            await networkHelpers.time.increase(121n * oneDay + 1n);
+            await connectedEthers.provider.send("evm_increaseTime", [Number(121n * oneDay + 2n)]);
+            await connectedEthers.provider.send("evm_mine", []);
 
             const tx = await inheritanceProtocol.updateState();
 
@@ -655,39 +657,47 @@ describe("Inheritance Protocol", function () {
         });
 
 // --- Add this new block anywhere in the file (e.g., after the "Check-ins and state machine" suite) ---
-        describe("State machine \u2014 end to end", function () {
+        describe("State machine — end to end", function () {
             const DAY = 24n * 60n * 60n;
 
-            it("ACTIVE \u2192 WARNING after > 90 days without check-in", async function () {
-                const {networkHelpers} = await hre.network.connect();
+            // Redeploy a fresh protocol instance to isolate from the Payouts beforeEach (no deposits/beneficiaries)
+            beforeEach(async function () {
+                const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
+                inheritanceProtocol = await InheritanceProtocolFactory.deploy(
+                    await mockUSDC.getAddress(),
+                    await mockDeathOracle.getAddress()
+                );
+            });
+
+            it("ACTIVE → WARNING after > 90 days without check-in", async function () {
                 expect(await inheritanceProtocol.getState()).to.equal(0); // ACTIVE
 
-                await networkHelpers.time.increase(90n * DAY + 1n);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(90n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState();
 
                 expect(await inheritanceProtocol.getState()).to.equal(1); // WARNING
             });
 
-            it("WARNING \u2192 VERIFICATION after > 120 days total", async function () {
-                const {networkHelpers} = await hre.network.connect();
-
+            it("WARNING → VERIFICATION after > 120 days total", async function () {
                 // Move to WARNING
-                await networkHelpers.time.increase(90n * DAY + 1n);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(90n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(1);
 
                 // Now exceed total 120d from last check-in to reach VERIFICATION
-                await networkHelpers.time.increase(30n * DAY + 1n);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(30n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState();
 
                 expect(await inheritanceProtocol.getState()).to.equal(2); // VERIFICATION
             });
 
             it("Remains in VERIFICATION until death is confirmed", async function () {
-                const {networkHelpers} = await hre.network.connect();
-
-                // Jump directly ACTIVE \u2192 WARNING \u2192 VERIFICATION in one call (death not confirmed)
-                await networkHelpers.time.increase(121n * DAY + 1n);
+                // Jump directly ACTIVE → WARNING → VERIFICATION in one call (death not confirmed)
+                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(2); // VERIFICATION
 
@@ -697,11 +707,10 @@ describe("Inheritance Protocol", function () {
             });
 
             it("Transitions to DISTRIBUTION when death is confirmed", async function () {
-                const {networkHelpers} = await hre.network.connect();
-
                 // Set death first, then transition in a single call
-                await mockDeathOracle.setDeathStatus(owner.address, true, "0xproof");
-                await networkHelpers.time.increase(121n * DAY + 1n);
+                await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
+                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
 
                 const tx = await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(3); // DISTRIBUTION
@@ -711,27 +720,25 @@ describe("Inheritance Protocol", function () {
             });
 
             it("In DISTRIBUTION, calling updateState again reverts due to one-time payout guard (current behavior)", async function () {
-                const {networkHelpers} = await hre.network.connect();
-
-                await mockDeathOracle.setDeathStatus(owner.address, true, "0xproof");
-                await networkHelpers.time.increase(121n * DAY + 1n);
+                await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
+                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState(); // enters DISTRIBUTION and triggers payout once
 
                 await expect(inheritanceProtocol.updateState()).to.be.revertedWith("Payout can only be called once.");
             });
 
             it("checkIn resets the timer and keeps state ACTIVE", async function () {
-                const {networkHelpers} = await hre.network.connect();
-
                 const before = await inheritanceProtocol.getLastCheckIn();
-                await networkHelpers.time.increase(10n * DAY);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(10n * DAY)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 const tx = await inheritanceProtocol.checkIn();
                 await expect(tx).to.emit(inheritanceProtocol, "CheckedIn");
 
                 const after = await inheritanceProtocol.getLastCheckIn();
                 expect(after).to.be.gt(before);
 
-                // Not enough time elapsed after fresh check-in \u2192 stays ACTIVE
+                // Not enough time elapsed after fresh check-in → stays ACTIVE
                 await networkHelpers.time.increase(89n * DAY);
                 await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(0); // ACTIVE
@@ -741,7 +748,7 @@ describe("Inheritance Protocol", function () {
                 const {networkHelpers} = await hre.network.connect();
 
                 // Move into VERIFICATION with no death confirmation
-                await networkHelpers.time.increase(121n * DAY + 1n);
+                await networkHelpers.time.increase(121n * DAY + 2n);
                 await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(2);
 
