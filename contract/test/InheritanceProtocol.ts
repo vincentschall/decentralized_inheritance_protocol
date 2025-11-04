@@ -1,7 +1,7 @@
-import { expect } from "chai";
-import { ZeroAddress } from "ethers";
+import {expect} from "chai";
+import {ZeroAddress} from "ethers";
 import hre from "hardhat";
-import type { InheritanceProtocol, MockUSDC, MockDeathOracle } from "../types/ethers-contracts/index.js";
+import type {InheritanceProtocol, MockUSDC, MockDeathOracle} from "../types/ethers-contracts/index.js";
 
 let connectedEthers: Awaited<ReturnType<typeof hre.network.connect>>['ethers'];
 
@@ -28,7 +28,7 @@ describe("Inheritance Protocol", function () {
     const INITIAL_USDC_BALANCE = 10000n * (10n ** BigInt(USDC_DECIMALS));
 
     before(async function () {
-        const { ethers } = await hre.network.connect();
+        const {ethers} = await hre.network.connect();
         connectedEthers = ethers;
         [owner, beneficiary1, beneficiary2, beneficiary3, beneficiary4, beneficiary5, beneficiary6, beneficiary7, beneficiary8, beneficiary9, beneficiary10, ...addrs] = await connectedEthers.getSigners();
     });
@@ -92,7 +92,7 @@ describe("Inheritance Protocol", function () {
 
     describe("Beneficiary handling helpers", function () {
         async function setupBeneficiaries(setup: Array<{ address: SignerType; amount: bigint }>) {
-            for (const { address, amount } of setup) {
+            for (const {address, amount} of setup) {
                 const tx = await inheritanceProtocol.addBeneficiary(address.address, amount);
                 await expect(tx).to.emit(inheritanceProtocol, "BeneficiaryAdded");
             }
@@ -100,16 +100,16 @@ describe("Inheritance Protocol", function () {
 
         async function setup10Beneficiaries() {
             await setupBeneficiaries([
-                { address: beneficiary1, amount: 10n },
-                { address: beneficiary2, amount: 10n },
-                { address: beneficiary3, amount: 10n },
-                { address: beneficiary4, amount: 10n },
-                { address: beneficiary5, amount: 10n },
-                { address: beneficiary6, amount: 10n },
-                { address: beneficiary7, amount: 10n },
-                { address: beneficiary8, amount: 10n },
-                { address: beneficiary9, amount: 10n },
-                { address: beneficiary10, amount: 10n }
+                {address: beneficiary1, amount: 10n},
+                {address: beneficiary2, amount: 10n},
+                {address: beneficiary3, amount: 10n},
+                {address: beneficiary4, amount: 10n},
+                {address: beneficiary5, amount: 10n},
+                {address: beneficiary6, amount: 10n},
+                {address: beneficiary7, amount: 10n},
+                {address: beneficiary8, amount: 10n},
+                {address: beneficiary9, amount: 10n},
+                {address: beneficiary10, amount: 10n}
             ]);
         }
 
@@ -127,10 +127,10 @@ describe("Inheritance Protocol", function () {
                 const initialCount = await inheritanceProtocol.getActiveCount();
                 const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 10n },
-                    { address: beneficiary2, amount: 20n },
-                    { address: beneficiary3, amount: 30n },
-                    { address: beneficiary4, amount: 40n }
+                    {address: beneficiary1, amount: 10n},
+                    {address: beneficiary2, amount: 20n},
+                    {address: beneficiary3, amount: 30n},
+                    {address: beneficiary4, amount: 40n}
                 ]);
                 expect(await inheritanceProtocol.getActiveCount()).to.equal(initialCount + 4n);
                 expect(await inheritanceProtocol.getDeterminedPayoutPercentage()).to.equal(initialSum + 100n);
@@ -182,8 +182,8 @@ describe("Inheritance Protocol", function () {
                 const initialSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
 
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 50n },
-                    { address: beneficiary2, amount: 50n }
+                    {address: beneficiary1, amount: 50n},
+                    {address: beneficiary2, amount: 50n}
                 ]);
 
                 const tx = await inheritanceProtocol.addBeneficiary(beneficiary3.address, 1n);
@@ -207,9 +207,9 @@ describe("Inheritance Protocol", function () {
         describe("Removing beneficiaries", function () {
             beforeEach(async function () {
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 10n },
-                    { address: beneficiary2, amount: 20n },
-                    { address: beneficiary3, amount: 30n }
+                    {address: beneficiary1, amount: 10n},
+                    {address: beneficiary2, amount: 20n},
+                    {address: beneficiary3, amount: 30n}
                 ]);
             });
 
@@ -253,8 +253,8 @@ describe("Inheritance Protocol", function () {
                 await inheritanceProtocol.removeBeneficiary(beneficiary3.address);
 
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 40n },
-                    { address: beneficiary2, amount: 60n }
+                    {address: beneficiary1, amount: 40n},
+                    {address: beneficiary2, amount: 60n}
                 ]);
                 expect(await inheritanceProtocol.isPayoutFullyDetermined()).to.be.true;
 
@@ -271,9 +271,9 @@ describe("Inheritance Protocol", function () {
         describe("Getting beneficiaries", function () {
             beforeEach(async function () {
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 10n },
-                    { address: beneficiary3, amount: 30n },
-                    { address: beneficiary5, amount: 50n }
+                    {address: beneficiary1, amount: 10n},
+                    {address: beneficiary3, amount: 30n},
+                    {address: beneficiary5, amount: 50n}
                 ]);
             });
 
@@ -334,11 +334,11 @@ describe("Inheritance Protocol", function () {
             it("Should handle adding and removing in mixed order without issues", async function () {
                 // Add 5
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 20n },
-                    { address: beneficiary2, amount: 20n },
-                    { address: beneficiary3, amount: 20n },
-                    { address: beneficiary4, amount: 20n },
-                    { address: beneficiary5, amount: 20n }
+                    {address: beneficiary1, amount: 20n},
+                    {address: beneficiary2, amount: 20n},
+                    {address: beneficiary3, amount: 20n},
+                    {address: beneficiary4, amount: 20n},
+                    {address: beneficiary5, amount: 20n}
                 ]);
                 let currentCount = await inheritanceProtocol.getActiveCount();
                 let currentSum = await inheritanceProtocol.getDeterminedPayoutPercentage();
@@ -385,8 +385,8 @@ describe("Inheritance Protocol", function () {
 
             it("findBeneficiaryIndex should work correctly", async function () {
                 await setupBeneficiaries([
-                    { address: beneficiary1, amount: 10n },
-                    { address: beneficiary2, amount: 20n }
+                    {address: beneficiary1, amount: 10n},
+                    {address: beneficiary2, amount: 20n}
                 ]);
 
                 // Note: This is an internal view function, but we can test via events or indirect checks
@@ -551,7 +551,7 @@ describe("Inheritance Protocol", function () {
         });
     });
 
-    describe("Check-ins and state machine", function (){
+    describe("Check-ins and state machine", function () {
         const CHECK_IN_PERIOD = 90n * 24n * 60n * 60n;
         const GRACE_PERIOD = 30n * 24n * 60n * 60n;
 
@@ -571,7 +571,7 @@ describe("Inheritance Protocol", function () {
         describe("Check-ins in active state", function () {
 
             it("Should allow owner to check in", async function () {
-                const { networkHelpers } = await hre.network.connect();
+                const {networkHelpers} = await hre.network.connect();
                 const initialCheckIn = await inheritanceProtocol.getLastCheckIn();
                 const timeSkip = 10n * 24n * 60n * 60n; // 10 days
                 await networkHelpers.time.increase(timeSkip);
@@ -619,34 +619,143 @@ describe("Inheritance Protocol", function () {
             await inheritanceProtocol.addBeneficiary(beneficiary1.address, 50n); // 50%
             await inheritanceProtocol.addBeneficiary(beneficiary2.address, 50n); // 50%
         });
-
+// typescript
+// --- Replace the empty test in your existing `describe("Payouts", ...)` with this ---
         it("Should distribute funds correctly", async function () {
-            const balanceBefore1 = await mockUSDC.balanceOf(beneficiary1.address);
-            const balanceBefore2 = await mockUSDC.balanceOf(beneficiary2.address);
-            await inheritanceProtocol.checkIn();
+            const {networkHelpers} = await hre.network.connect();
+            const oneDay = 24n * 60n * 60n;
+            const contractAddress = await inheritanceProtocol.getAddress();
 
-            const { networkHelpers } = await hre.network.connect();
-            console.log(await networkHelpers.time.latest());
-            const timeSkip = BigInt("11000000");
-            await networkHelpers.time.increase(timeSkip);
-            await networkHelpers.mine(1);
-            console.log(await networkHelpers.time.latest());
-            await mockDeathOracle.setDeathStatus(owner.address, true, "0x12345678");
+            // Snapshot balances
+            const b1Before = await mockUSDC.balanceOf(beneficiary1.address);
+            const b2Before = await mockUSDC.balanceOf(beneficiary2.address);
+            const contractBefore = await mockUSDC.balanceOf(contractAddress);
+            expect(contractBefore).to.equal(DEPOSIT_AMOUNT);
+
+            // Confirm death before updating state so a single call transitions all the way to DISTRIBUTION
+            await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
+
+            // Advance time: > 90d + 30d (strict ">" in contract), then update once
+            await networkHelpers.time.increase(121n * oneDay + 1n);
+
             const tx = await inheritanceProtocol.updateState();
-            await expect(tx).to.emit(inheritanceProtocol, "StateChanged").withArgs(networkHelpers.time.latest(), 0, 3);
-            await expect(tx).to.emit(inheritanceProtocol, "TestEventNum").withArgs(3)
-            await expect(tx).to.emit(inheritanceProtocol, "TestEvent").withArgs("Payout")
 
-            const balanceAfter1 = await mockUSDC.balanceOf(beneficiary1.address);
-            const balanceAfter2 = await mockUSDC.balanceOf(beneficiary2.address);
+            const half = DEPOSIT_AMOUNT / 2n;
 
-            // Verify 50% of contract balance each
-            expect(balanceAfter1 - balanceBefore1).to.equal(DEPOSIT_AMOUNT / 2n);
-            expect(balanceAfter2 - balanceBefore2).to.equal(DEPOSIT_AMOUNT / 2n);
+            // Two payouts of 50% each (order follows insertion)
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(half, beneficiary1.address);
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(half, beneficiary2.address);
 
-            // Contract balance should now be 0
+            // Final state and balances
+            expect(await inheritanceProtocol.getState()).to.equal(3); // DISTRIBUTION
             expect(await inheritanceProtocol.getBalance()).to.equal(0n);
+            expect(await mockUSDC.balanceOf(contractAddress)).to.equal(0n);
+            expect(await mockUSDC.balanceOf(beneficiary1.address)).to.equal(b1Before + half);
+            expect(await mockUSDC.balanceOf(beneficiary2.address)).to.equal(b2Before + half);
         });
+
+// --- Add this new block anywhere in the file (e.g., after the "Check-ins and state machine" suite) ---
+        describe("State machine \u2014 end to end", function () {
+            const DAY = 24n * 60n * 60n;
+
+            it("ACTIVE \u2192 WARNING after > 90 days without check-in", async function () {
+                const {networkHelpers} = await hre.network.connect();
+                expect(await inheritanceProtocol.getState()).to.equal(0); // ACTIVE
+
+                await networkHelpers.time.increase(90n * DAY + 1n);
+                await inheritanceProtocol.updateState();
+
+                expect(await inheritanceProtocol.getState()).to.equal(1); // WARNING
+            });
+
+            it("WARNING \u2192 VERIFICATION after > 120 days total", async function () {
+                const {networkHelpers} = await hre.network.connect();
+
+                // Move to WARNING
+                await networkHelpers.time.increase(90n * DAY + 1n);
+                await inheritanceProtocol.updateState();
+                expect(await inheritanceProtocol.getState()).to.equal(1);
+
+                // Now exceed total 120d from last check-in to reach VERIFICATION
+                await networkHelpers.time.increase(30n * DAY + 1n);
+                await inheritanceProtocol.updateState();
+
+                expect(await inheritanceProtocol.getState()).to.equal(2); // VERIFICATION
+            });
+
+            it("Remains in VERIFICATION until death is confirmed", async function () {
+                const {networkHelpers} = await hre.network.connect();
+
+                // Jump directly ACTIVE \u2192 WARNING \u2192 VERIFICATION in one call (death not confirmed)
+                await networkHelpers.time.increase(121n * DAY + 1n);
+                await inheritanceProtocol.updateState();
+                expect(await inheritanceProtocol.getState()).to.equal(2); // VERIFICATION
+
+                // Another update without confirming death does not payout
+                await expect(inheritanceProtocol.updateState()).to.not.emit(inheritanceProtocol, "PayoutMade");
+                expect(await inheritanceProtocol.getState()).to.equal(2);
+            });
+
+            it("Transitions to DISTRIBUTION when death is confirmed", async function () {
+                const {networkHelpers} = await hre.network.connect();
+
+                // Set death first, then transition in a single call
+                await mockDeathOracle.setDeathStatus(owner.address, true, "0xproof");
+                await networkHelpers.time.increase(121n * DAY + 1n);
+
+                const tx = await inheritanceProtocol.updateState();
+                expect(await inheritanceProtocol.getState()).to.equal(3); // DISTRIBUTION
+
+                // If there are beneficiaries, payouts may emit; without deposits it's fine (amount 0)
+                // We assert absence of revert and correct final state here.
+            });
+
+            it("In DISTRIBUTION, calling updateState again reverts due to one-time payout guard (current behavior)", async function () {
+                const {networkHelpers} = await hre.network.connect();
+
+                await mockDeathOracle.setDeathStatus(owner.address, true, "0xproof");
+                await networkHelpers.time.increase(121n * DAY + 1n);
+                await inheritanceProtocol.updateState(); // enters DISTRIBUTION and triggers payout once
+
+                await expect(inheritanceProtocol.updateState()).to.be.revertedWith("Payout can only be called once.");
+            });
+
+            it("checkIn resets the timer and keeps state ACTIVE", async function () {
+                const {networkHelpers} = await hre.network.connect();
+
+                const before = await inheritanceProtocol.getLastCheckIn();
+                await networkHelpers.time.increase(10n * DAY);
+                const tx = await inheritanceProtocol.checkIn();
+                await expect(tx).to.emit(inheritanceProtocol, "CheckedIn");
+
+                const after = await inheritanceProtocol.getLastCheckIn();
+                expect(after).to.be.gt(before);
+
+                // Not enough time elapsed after fresh check-in \u2192 stays ACTIVE
+                await networkHelpers.time.increase(89n * DAY);
+                await inheritanceProtocol.updateState();
+                expect(await inheritanceProtocol.getState()).to.equal(0); // ACTIVE
+            });
+
+            it("Administrative changes are blocked in VERIFICATION", async function () {
+                const {networkHelpers} = await hre.network.connect();
+
+                // Move into VERIFICATION with no death confirmation
+                await networkHelpers.time.increase(121n * DAY + 1n);
+                await inheritanceProtocol.updateState();
+                expect(await inheritanceProtocol.getState()).to.equal(2);
+
+                // Adding/removing beneficiaries should be blocked by onlyActiveWarning
+                await expect(
+                    inheritanceProtocol.addBeneficiary((await beneficiary1.getAddress()), 10n)
+                ).to.be.revertedWith("Cannot make administrative changes without Owner check-In");
+
+                await expect(
+                    inheritanceProtocol.removeBeneficiary((await beneficiary1.getAddress()))
+                ).to.be.revertedWith("Cannot make administrative changes without Owner check-In");
+            });
+        });
+
 
     });
 });

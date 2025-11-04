@@ -121,8 +121,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         }
 
         emit StateChanged(block.timestamp, _currentState, newState);
-        emit TestEventNum(elapsed);
-        //emit TestEventNum(uint(newState));
 
         // --- Apply new state and side effects ---
         if (newState != _currentState) {
@@ -132,7 +130,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         // Trigger payout if we reached DISTRIBUTION
         if (newState == State.DISTRIBUTION) {
             distributePayout();
-            emit TestEvent("Payout");
         }
 
         return _currentState;
