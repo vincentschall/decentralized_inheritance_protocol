@@ -20,3 +20,5 @@
 /coverage
 
 /ignition/deployments
+
+/deployment-info.json

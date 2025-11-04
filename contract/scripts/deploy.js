@@ -2,6 +2,7 @@
 // run this in new terminal session with npx hardhat run scripts/deploy.js --network localhost
 import hre from "hardhat";
 import DeployModule from "../ignition/modules/Deploy.js";
+import fs from "fs";
 
 async function main() {
     console.log("Deploying contracts ...");
@@ -34,6 +35,28 @@ async function main() {
     console.log("Sending 10000 usdc to owner");
     await mockUSDC.mint(owner.address, initialBalance);
     await mockUSDC.connect(owner).approve(await mockUSDC.getAddress(), initialBalance);
+
+    const deploymentInfo = {
+        network: "localhost",
+        contracts: {
+            MockUSDC: await mockUSDC.getAddress(),
+            MockDeathOracle: await mockDeathOracle.getAddress(),
+            InheritanceProtocol: await inheritanceProtocol.getAddress()
+        },
+        accounts: {
+            owner: owner.address,
+            notary: notary.address,
+            beneficiary1: beneficiary1.address,
+            beneficiary2: beneficiary2.address,
+            beneficiary3: beneficiary3.address
+        }
+    };
+
+    console.log("Deployment summary: ");
+    console.log(JSON.stringify(deploymentInfo, null, 2));
+    fs.writeFileSync("./deployment-info.json", JSON.stringify(deploymentInfo, null, 2));
+    console.log("Deployment info saved to deployment-info.json");
+
 }
 
 main().catch((error) => {
