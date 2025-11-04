@@ -10,6 +10,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     IERC20 public immutable usdc;
     IDeathOracle public immutable deathOracle;
+    address private notaryAddress;
 
     /**
      * Stores address and payout percentage amount (0-100) of a beneficiary.
@@ -47,11 +48,12 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Initializes a new InheritanceProtocol.
      * @param _usdcAddress address of the currency used (non-zero).
      */
-    constructor(address _usdcAddress, address _deathOracleAddress) Ownable(msg.sender) {
+    constructor(address _usdcAddress, address _deathOracleAddress, address _notaryAddress) Ownable(msg.sender) {
         require(_usdcAddress != address(0), "USDC address zero");
         require(_deathOracleAddress != address(0), "Death Oracle address zero");
         usdc = IERC20(_usdcAddress);
         deathOracle = IDeathOracle(_deathOracleAddress);
+        notaryAddress = _notaryAddress;
         _currentState = State.ACTIVE;
         _lastCheckIn = block.timestamp;
     }
@@ -79,6 +81,14 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      */
     modifier onlyDistribution() {
         require(_currentState == State.DISTRIBUTION, "Can only make payouts in distribution phase");
+        _;
+    }
+
+    /**
+     * This modifier requires the function call to be made by the notary
+     */
+    modifier onlyNotary() {
+        require(msg.sender == notaryAddress, "Only notary can call this function");
         _;
     }
 
@@ -269,6 +279,14 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     }
 
     /// ---------- DEATH CERTIFICATION ----------
+
+    /**
+     * Upload the death verification to the chain
+     * Only callable by the notary
+     */
+    function uploadDeathVerification(bool _deceased, bytes calldata _proof) external onlyNotary{
+        deathOracle.setDeathStatus(owner(), _deceased, _proof);
+    }
 
     /**
      * Checks if the owner died by calling death certificate oracle.

@@ -7,4 +7,7 @@ interface IDeathOracle {
 
     /// @notice Returns a cryptographic proof or reference (optional)
     function getProof(address owner) external view returns (bytes memory);
+
+    /// @notice Sets the death status of the owner address
+    function setDeathStatus(address owner, bool _deceased, bytes calldata _proof) external;
 }
