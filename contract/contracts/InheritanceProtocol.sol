@@ -25,7 +25,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     State private _currentState;
 
     uint256 private _lastCheckIn;
-    bool private _called;
+    bool private _called = false;
 
     uint256 private constant NOT_FOUND = type(uint256).max;
     uint256 private constant MAX_BENEFICIARIES = 10;
@@ -40,6 +40,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     event CheckedIn(uint256 timestamp);
     event StateChanged(uint256 timestamp, State from, State to);
     event PayoutMade(uint256 amount, address payoutAddress);
+    event TestEvent(string s);
+    event TestEventNum(uint s);
 
     /**
      * Initializes a new InheritanceProtocol.
@@ -98,7 +100,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @return currentState after execution
      */
     function updateState() public returns (State) {
-        uint256 elapsed = block.timestamp - _lastCheckIn;
+        uint256 elapsed = uint256(block.timestamp) - _lastCheckIn;
         State newState = _currentState;
 
         // --- Phase transitions in logical order ---
@@ -119,15 +121,18 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         }
 
         emit StateChanged(block.timestamp, _currentState, newState);
+        emit TestEventNum(elapsed);
+        //emit TestEventNum(uint(newState));
 
         // --- Apply new state and side effects ---
         if (newState != _currentState) {
             _currentState = newState;
+        }
 
-            // Trigger payout if we reached DISTRIBUTION
-            if (newState == State.DISTRIBUTION) {
-                distributePayout();
-            }
+        // Trigger payout if we reached DISTRIBUTION
+        if (newState == State.DISTRIBUTION) {
+            distributePayout();
+            emit TestEvent("Payout");
         }
 
         return _currentState;
@@ -152,7 +157,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         require(_currentState == State.ACTIVE || _currentState == State.WARNING, "Need to be in active or warning state");
         emit CheckedIn(block.timestamp);
         _lastCheckIn = block.timestamp;
-        updateState();
     }
 
     /// ---------- BENEFICIARY HANDLING ----------
@@ -288,8 +292,9 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Distributes the payout based on definitions given by owner.
      * Is only called in the updateState() Function, after death verification
      */
-    function distributePayout() private {
+    function distributePayout() public {
         require(!_called, "Payout can only be called once.");
+        _called = true;
         uint256 count = getActiveCount();
         Beneficiary[] memory activeBeneficiaries = getActiveBeneficiaries();
         uint256 originalBalance = _balance;

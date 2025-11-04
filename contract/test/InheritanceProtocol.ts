@@ -620,18 +620,22 @@ describe("Inheritance Protocol", function () {
             await inheritanceProtocol.addBeneficiary(beneficiary2.address, 50n); // 50%
         });
 
-        /*
         it("Should distribute funds correctly", async function () {
             const balanceBefore1 = await mockUSDC.balanceOf(beneficiary1.address);
             const balanceBefore2 = await mockUSDC.balanceOf(beneficiary2.address);
+            await inheritanceProtocol.checkIn();
 
             const { networkHelpers } = await hre.network.connect();
-            const timeSkip = 121n * 24n * 60n * 60n;
+            console.log(await networkHelpers.time.latest());
+            const timeSkip = BigInt("11000000");
             await networkHelpers.time.increase(timeSkip);
-            await inheritanceProtocol.updateState();
+            await networkHelpers.mine(1);
+            console.log(await networkHelpers.time.latest());
             await mockDeathOracle.setDeathStatus(owner.address, true, "0x12345678");
             const tx = await inheritanceProtocol.updateState();
-            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade");
+            await expect(tx).to.emit(inheritanceProtocol, "StateChanged").withArgs(networkHelpers.time.latest(), 0, 3);
+            await expect(tx).to.emit(inheritanceProtocol, "TestEventNum").withArgs(3)
+            await expect(tx).to.emit(inheritanceProtocol, "TestEvent").withArgs("Payout")
 
             const balanceAfter1 = await mockUSDC.balanceOf(beneficiary1.address);
             const balanceAfter2 = await mockUSDC.balanceOf(beneficiary2.address);
@@ -643,6 +647,6 @@ describe("Inheritance Protocol", function () {
             // Contract balance should now be 0
             expect(await inheritanceProtocol.getBalance()).to.equal(0n);
         });
-    */
+
     });
 });
