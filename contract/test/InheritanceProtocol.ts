@@ -519,9 +519,14 @@ describe("Inheritance Protocol", function () {
             });
 
             it("Should reject withdrawal post-distribution (when implemented)", async function () {
-                // TODO: Once state machine is added, mock or set currentState to DISTRIBUTION and expect revert with "Cannot modify funds post-distribution"
-                // For now, skipped as state not yet implemented
-                this.skip();
+                const DAY = 24n * 60n * 60n;
+                await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
+                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
+                await inheritanceProtocol.updateState(); // enters DISTRIBUTION
+                await expect(inheritanceProtocol.withdraw(BigInt("10000"))).to.be.revertedWith(
+                    "Cannot modify funds post-distribution"
+                );
             });
         });
 
@@ -552,8 +557,6 @@ describe("Inheritance Protocol", function () {
     });
 
     describe("Check-ins and state machine", function () {
-        const CHECK_IN_PERIOD = 90n * 24n * 60n * 60n;
-        const GRACE_PERIOD = 30n * 24n * 60n * 60n;
 
         describe("Initial check-in state", function () {
             it("Should set last check-in time to deployment time", async function () {
