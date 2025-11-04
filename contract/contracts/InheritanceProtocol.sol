@@ -89,6 +89,45 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     }
 
     /**
+     * Updates the State in the State-Machine
+     * Should always be possible and accessible by anyone
+     */
+    function updateState() external returns (State now) {
+        State state = currentState;
+
+        uint256 elapsed = block.timestamp - lastCheckIn; // compute once
+
+        if (state == State.ACTIVE) {
+            if (elapsed > CHECK_IN_PERIOD) {
+                currentState = State.WARNING;
+                return State.WARNING;
+            }
+            return State.ACTIVE;
+        }
+
+        if (state == State.WARNING) {
+            if (elapsed > CHECK_IN_PERIOD + GRACE_PERIOD) {
+                currentState = State.VERIFICATION;
+                return State.VERIFICATION;
+            }
+            return State.WARNING;
+        }
+
+        if (state == State.VERIFICATION) {
+            if (deathOracle.isDeceased(owner())) {
+                currentState = State.DISTRIBUTION;
+                distributePayout();
+                return State.DISTRIBUTION;
+            }
+            return State.VERIFICATION;
+        }
+
+        // Final State
+        return State.DISTRIBUTION;
+    }
+
+
+    /**
      * Changes the state of the contract to a given state.
      * @param to the state to change to.
      */
