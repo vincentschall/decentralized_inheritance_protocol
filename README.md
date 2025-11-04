@@ -20,16 +20,16 @@ not definitive and not in-order.
     - [x] Tested
 - **State handling: check-ins (liveness proof with timer reset)**
     - [x] Implemented
-    - [ ] Tested
+    - [x] Tested
 - **State handling: phase transitions (Active → Warning → Verification → Distribution)**
-    - [ ] Implemented
-    - [ ] Tested
+    - [x] Implemented
+    - [x] Tested
 - **Verification phase: mocking death certificates**
     - [x] Implemented
     - [x] Tested
 - **Payout logic (trigger distribution with percentage-based shares)**
-    - [ ] Implemented
-    - [ ] Tested
+    - [x] Implemented
+    - [x] Tested
 
 ### Yield and Vesting Integration
 - **Yield generation**
