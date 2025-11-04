@@ -739,16 +739,16 @@ describe("Inheritance Protocol", function () {
                 expect(after).to.be.gt(before);
 
                 // Not enough time elapsed after fresh check-in → stays ACTIVE
-                await networkHelpers.time.increase(89n * DAY);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(89n * DAY)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(0); // ACTIVE
             });
 
             it("Administrative changes are blocked in VERIFICATION", async function () {
-                const {networkHelpers} = await hre.network.connect();
-
                 // Move into VERIFICATION with no death confirmation
-                await networkHelpers.time.increase(121n * DAY + 2n);
+                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
                 await inheritanceProtocol.updateState();
                 expect(await inheritanceProtocol.getState()).to.equal(2);
 
