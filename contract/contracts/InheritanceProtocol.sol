@@ -19,12 +19,13 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         uint256 amount;
     }
 
-    Beneficiary[10] private beneficiaries;
+    Beneficiary[10] private _beneficiaries;
 
-    uint256 private balance;
-    State private currentState;
+    uint256 private _balance;
+    State private _currentState;
 
-    uint256 private lastCheckIn;
+    uint256 private _lastCheckIn;
+    bool private _called;
 
     uint256 private constant NOT_FOUND = type(uint256).max;
     uint256 private constant MAX_BENEFICIARIES = 10;
@@ -49,8 +50,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         require(_deathOracleAddress != address(0), "Death Oracle address zero");
         usdc = IERC20(_usdcAddress);
         deathOracle = IDeathOracle(_deathOracleAddress);
-        currentState = State.ACTIVE;
-        lastCheckIn = block.timestamp;
+        _currentState = State.ACTIVE;
+        _lastCheckIn = block.timestamp;
     }
 
     /// ---------- MODIFIERS ----------
@@ -59,7 +60,23 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * This modifier requires the function call to be made before distribution.
      */
     modifier onlyPreDistribution() {
-        require(currentState < State.DISTRIBUTION, "Cannot modify funds post-distribution");
+        require(_currentState < State.DISTRIBUTION, "Cannot modify funds post-distribution");
+        _;
+    }
+
+    /**
+     * This modifier requires the function call to be made in the ACTIVE or WARNING phase
+     */
+    modifier onlyActiveWarning() {
+        require(_currentState < State.VERIFICATION, "Cannot make administrative changes without Owner check-In");
+        _;
+    }
+
+    /**
+     * This modifier requires the function call to be made in the DISTRIBUTION phase
+     */
+    modifier onlyDistribution() {
+        require(_currentState == State.DISTRIBUTION, "Can only make payouts in distribution phase");
         _;
     }
 
@@ -76,54 +93,44 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
 
     /**
-     * The owner checks in to verify that he's alive.
-     * Should be possible in active and warning state.
-     */
-    function checkIn() external onlyOwner {
-        require(currentState == State.ACTIVE || currentState == State.WARNING, "Need to be in active or warning state");
-        emit CheckedIn(block.timestamp);
-        lastCheckIn = block.timestamp;
-        if (currentState == State.WARNING) {
-            changeState(State.ACTIVE);
-        }
-    }
-
-    /**
      * Updates the State in the State-Machine
      * Should always be possible and accessible by anyone
+     * @return currentState after execution
      */
-    function updateState() external returns (State now) {
-        State state = currentState;
+    function updateState() public returns (State) {
+        uint256 elapsed = block.timestamp - _lastCheckIn;
+        State newState = _currentState;
 
-        uint256 elapsed = block.timestamp - lastCheckIn; // compute once
+        // --- Phase transitions in logical order ---
 
-        if (state == State.ACTIVE) {
-            if (elapsed > CHECK_IN_PERIOD) {
-                currentState = State.WARNING;
-                return State.WARNING;
-            }
-            return State.ACTIVE;
+        // If in ACTIVE and check-in expired → WARNING
+        if (newState == State.ACTIVE && elapsed > CHECK_IN_PERIOD) {
+            newState = State.WARNING;
         }
 
-        if (state == State.WARNING) {
-            if (elapsed > CHECK_IN_PERIOD + GRACE_PERIOD) {
-                currentState = State.VERIFICATION;
-                return State.VERIFICATION;
-            }
-            return State.WARNING;
+        // If in WARNING and grace period expired → VERIFICATION
+        if (newState == State.WARNING && elapsed > CHECK_IN_PERIOD + GRACE_PERIOD) {
+            newState = State.VERIFICATION;
         }
 
-        if (state == State.VERIFICATION) {
-            if (deathOracle.isDeceased(owner())) {
-                currentState = State.DISTRIBUTION;
+        // If in VERIFICATION and death confirmed → DISTRIBUTION
+        if (newState == State.VERIFICATION && deathOracle.isDeceased(owner())) {
+            newState = State.DISTRIBUTION;
+        }
+
+        emit StateChanged(block.timestamp, _currentState, newState);
+
+        // --- Apply new state and side effects ---
+        if (newState != _currentState) {
+            _currentState = newState;
+
+            // Trigger payout if we reached DISTRIBUTION
+            if (newState == State.DISTRIBUTION) {
                 distributePayout();
-                return State.DISTRIBUTION;
             }
-            return State.VERIFICATION;
         }
 
-        // Final State
-        return State.DISTRIBUTION;
+        return _currentState;
     }
 
 
@@ -132,29 +139,24 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @param to the state to change to.
      */
     function changeState (State to) public {
-        require(to != currentState, "Already in requested state");
-        emit StateChanged(block.timestamp, currentState, to);
-        currentState = to;
+        require(to != _currentState, "Already in requested state");
+        emit StateChanged(block.timestamp, _currentState, to);
+        _currentState = to;
+    }
+
+    /**
+     * The owner checks in to verify that he's alive.
+     * Should be possible in active and warning state.
+     */
+    function checkIn() public onlyOwner {
+        require(_currentState == State.ACTIVE || _currentState == State.WARNING, "Need to be in active or warning state");
+        emit CheckedIn(block.timestamp);
+        _lastCheckIn = block.timestamp;
+        updateState();
     }
 
     /// ---------- BENEFICIARY HANDLING ----------
 
-    /**
-     * Removes a beneficiary with a given address.
-     * Only the owner can perform this action.
-     * @param _address the address to remove.
-     * Fails if the provided address is zero OR not in the list of beneficiaries.
-     * @return true if the deletion was successful, false otherwise.
-     */
-    function removeBeneficiary(address _address) public onlyOwner returns (bool) {
-        uint256 index = findBeneficiaryIndex(_address);
-        if (index == NOT_FOUND) {
-            return false;
-        }
-        delete beneficiaries[index];
-        emit BeneficiaryRemoved(_address, index);
-        return true;
-    }
 
     /**
      * Finds the index of a beneficiary in the beneficiaries list.
@@ -166,11 +168,29 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
             return NOT_FOUND;
         }
         for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress == _address) {
+            if (_beneficiaries[i].payoutAddress == _address) {
                 return i;
             }
         }
         return NOT_FOUND;
+    }
+
+    /**
+     * Removes a beneficiary with a given address.
+     * Only the owner can perform this action.
+     * @param _address the address to remove.
+     * Fails if the provided address is zero OR not in the list of beneficiaries.
+     * @return true if the deletion was successful, false otherwise.
+     */
+    function removeBeneficiary(address _address) public onlyOwner onlyActiveWarning returns (bool) {
+        checkIn();
+        uint256 index = findBeneficiaryIndex(_address);
+        if (index == NOT_FOUND) {
+            return false;
+        }
+        delete _beneficiaries[index];
+        emit BeneficiaryRemoved(_address, index);
+        return true;
     }
 
     /**
@@ -183,7 +203,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @param _amount the payout amount related to this address.
      * @return true if the addition was successful, false otherwise.
      */
-    function addBeneficiary(address _address, uint256 _amount) public onlyOwner returns (bool) {
+    function addBeneficiary(address _address, uint256 _amount) public onlyOwner onlyActiveWarning returns (bool) {
+        checkIn();
         require(_address != address(0), "Invalid address");
         require(_amount > 0 && _amount <= MAX_PERCENTAGE, "Invalid amount");
 
@@ -201,7 +222,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         // Find empty slot
         uint256 emptyIndex = NOT_FOUND;
         for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress == address(0)) {
+            if (_beneficiaries[i].payoutAddress == address(0)) {
                 emptyIndex = i;
                 break;
             }
@@ -211,7 +232,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
             return false; // Max beneficiaries reached
         }
 
-        beneficiaries[emptyIndex] = Beneficiary({ payoutAddress: _address, amount: _amount });
+        _beneficiaries[emptyIndex] = Beneficiary({ payoutAddress: _address, amount: _amount });
         emit BeneficiaryAdded(_address, _amount, emptyIndex);
         return true;
     }
@@ -224,11 +245,12 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Deposits a given amount of USDC.
      * @param _amount the amount to deposit.
      */
-    function deposit(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution{
+    function deposit(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution {
+        checkIn();
         require(_amount > 0, "Amount has to be greater than zero.");
 
         usdc.transferFrom(msg.sender, address(this), _amount);
-        balance += _amount;
+        _balance += _amount;
 
         //TODO add yield generating here -> Aave or something similar
         emit Deposited(_amount);
@@ -239,11 +261,12 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Withdraws a given amount of USDC.
      * @param _amount the amount to withdraw.
      */
-    function withdraw(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution{
+    function withdraw(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution {
+        checkIn();
         require(_amount > 0, "Amount has to be greater than zero.");
-        require(balance >= _amount, "Insufficient balance");
+        require(_balance >= _amount, "Insufficient balance");
 
-        balance -= _amount;
+        _balance -= _amount;
 
         usdc.transfer(msg.sender, _amount);
         emit Withdrawn(_amount);
@@ -263,14 +286,13 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     /**
      * Distributes the payout based on definitions given by owner.
-     * note: this is onlyOwner for now. in future we will adapt based on the decision making
-     * regarding automatic payouts and state machine. should maybe become private or only
-     * callable from a certain address.
+     * Is only called in the updateState() Function, after death verification
      */
-    function distributePayout() public onlyOwner {
+    function distributePayout() private {
+        require(!_called, "Payout can only be called once.");
         uint256 count = getActiveCount();
         Beneficiary[] memory activeBeneficiaries = getActiveBeneficiaries();
-        uint256 originalBalance = balance;
+        uint256 originalBalance = _balance;
         for (uint256 i=0; i<count; i++) {
             Beneficiary memory beneficiary = activeBeneficiaries[i];
             uint256 amount = beneficiary.amount;
@@ -281,7 +303,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
             // decision made: change balance value (should be 0 at the end)
             // pros: good for checking / testing
             // cons: just setting it to 0 would be less error-prone
-            balance -= actualAmount;
+            _balance -= actualAmount;
 
             usdc.transfer( payoutAddress, actualAmount);
             emit PayoutMade(actualAmount, payoutAddress);
@@ -307,8 +329,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     function getDeterminedPayoutPercentage() public view returns (uint256) {
         uint256 sum;
         for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress != address(0)) {
-                sum += beneficiaries[i].amount;
+            if (_beneficiaries[i].payoutAddress != address(0)) {
+                sum += _beneficiaries[i].amount;
             }
         }
         return sum;
@@ -319,7 +341,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @return the balance of the combined deposited funds.
      */
     function getBalance() public view returns (uint256) {
-        return balance; // If using Aave this might not work anymore
+        return _balance; // If using Aave this might not work anymore
     }
 
     /**
@@ -327,7 +349,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @return the list of 10 beneficiaries (might contain empty slots).
      */
     function getBeneficiaries() public view returns (Beneficiary[10] memory) {
-        return beneficiaries;
+        return _beneficiaries;
     }
 
     /**
@@ -337,7 +359,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     function getActiveCount() public view returns (uint256) {
         uint256 count;
         for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress != address(0)) {
+            if (_beneficiaries[i].payoutAddress != address(0)) {
                 count++;
             }
         }
@@ -353,8 +375,8 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         Beneficiary[] memory active = new Beneficiary[](activeCount);
         uint256 count = 0;
         for (uint256 i = 0; i < MAX_BENEFICIARIES; i++) {
-            if (beneficiaries[i].payoutAddress != address(0)) {
-                active[count] = beneficiaries[i];
+            if (_beneficiaries[i].payoutAddress != address(0)) {
+                active[count] = _beneficiaries[i];
                 count++;
             }
         }
@@ -366,7 +388,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @return the current state.
      */
     function getState() public view returns (State) {
-        return currentState;
+        return _currentState;
     }
 
     /**
@@ -374,7 +396,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @return the last check-in time.
      */
     function getLastCheckIn() public view returns (uint256) {
-        return lastCheckIn;
+        return _lastCheckIn;
     }
 
 }
