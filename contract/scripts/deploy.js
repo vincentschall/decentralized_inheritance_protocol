@@ -16,8 +16,15 @@ async function main() {
     console.log("Beneficiary2: ", beneficiary2.address);
     console.log("Beneficiary3: ", beneficiary3.address);
 
-    const { mockUSDC, mockDeathOracle, inheritanceProtocol } = await connection.ignition.deploy(DeployModule);
-
+    const { mockUSDC, mockDeathOracle, inheritanceProtocol } = await connection.ignition.deploy(
+        DeployModule, {
+            parameters: {
+                Deploy: {
+                    notaryAddress: notary.address
+                }
+            }
+        }
+    );
 
     console.log("MockUSDC deployed to: ", await mockUSDC.getAddress());
     console.log("MockDeathOracle deployed to: ", await mockDeathOracle.getAddress());
@@ -26,6 +33,7 @@ async function main() {
     const initialBalance = connection.ethers.parseUnits("10000", 6); // 10,000 USDC
     console.log("Sending 10000 usdc to owner");
     await mockUSDC.mint(owner.address, initialBalance);
+    await mockUSDC.connect(owner).approve(await mockUSDC.getAddress(), initialBalance);
 }
 
 main().catch((error) => {
