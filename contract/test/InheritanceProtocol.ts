@@ -621,8 +621,7 @@ describe("Inheritance Protocol", function () {
             await inheritanceProtocol.addBeneficiary(beneficiary1.address, 50n); // 50%
             await inheritanceProtocol.addBeneficiary(beneficiary2.address, 50n); // 50%
         });
-// typescript
-// --- Replace the empty test in your existing `describe("Payouts", ...)` with this ---
+
         it("Should distribute funds correctly", async function () {
             const oneDay = 24n * 60n * 60n;
             const contractAddress = await inheritanceProtocol.getAddress();
@@ -636,15 +635,13 @@ describe("Inheritance Protocol", function () {
             // Confirm death before updating state so a single call transitions all the way to DISTRIBUTION
             await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
 
-            // Advance time: > 90d + 30d (strict ">" in contract), then update once
+            // Advance time: > 90d + 30d
             await connectedEthers.provider.send("evm_increaseTime", [Number(121n * oneDay + 2n)]);
             await connectedEthers.provider.send("evm_mine", []);
 
             const tx = await inheritanceProtocol.updateState();
 
             const half = DEPOSIT_AMOUNT / 2n;
-
-            // Two payouts of 50% each (order follows insertion)
             await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(half, beneficiary1.address);
             await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(half, beneficiary2.address);
 
@@ -656,11 +653,9 @@ describe("Inheritance Protocol", function () {
             expect(await mockUSDC.balanceOf(beneficiary2.address)).to.equal(b2Before + half);
         });
 
-// --- Add this new block anywhere in the file (e.g., after the "Check-ins and state machine" suite) ---
         describe("State machine — end to end", function () {
             const DAY = 24n * 60n * 60n;
 
-            // Redeploy a fresh protocol instance to isolate from the Payouts beforeEach (no deposits/beneficiaries)
             beforeEach(async function () {
                 const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
                 inheritanceProtocol = await InheritanceProtocolFactory.deploy(
