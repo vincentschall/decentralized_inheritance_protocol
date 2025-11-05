@@ -14,7 +14,7 @@
 \usepackage{xcolor}
 
 % Better typesetting
-\usepackage{microtype}
+\usepackage[expansion=false]{microtype}
 
 % Hyperlinks
 \usepackage[hidelinks]{hyperref}
@@ -25,6 +25,12 @@
 
 % Code listings
 \usepackage{listings}
+\lstdefinelanguage{JavaScript}{
+    keywords={typeof, new, true, false, catch, function, return, null, switch, var, if, while, do, else, case, break},
+    morecomment=[s]{/*}{*/},
+    morecomment=[l]{//},
+    morestring=[b]{"}
+}
 \usepackage{courier}
 \lstset{
   basicstyle=\footnotesize\ttfamily,
@@ -38,6 +44,8 @@
   stringstyle=\color{teal},
   showstringspaces=false,
   tabsize=2,
+  columns=flexible,
+  keepspaces=true
 }
 
 % Title page info

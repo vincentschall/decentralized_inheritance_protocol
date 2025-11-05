@@ -6,22 +6,14 @@ Files
 - report.tex  : Main LaTeX source
 - refs.bib    : Bibliography file
 - build.sh    : POSIX shell build script (macOS / Linux)
-- build.ps1   : PowerShell build script (Windows)
 
-Building (macOS / Linux)
+Building
 
 Run the POSIX build script. It will create artifacts in `docs/report/build/`.
 
 ```bash
 cd docs/report
 ./build.sh
-```
-
-Building (Windows PowerShell)
-
-```powershell
-cd docs/report
-./build.ps1
 ```
 
 Notes
