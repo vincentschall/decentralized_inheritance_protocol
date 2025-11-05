@@ -1,0 +1,117 @@
+% report.tex - Boilerplate LaTeX report for Decentralized Inheritance Protocol
+\documentclass[11pt,a4paper]{article}
+
+% Encoding and language
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+
+% Page geometry
+\usepackage[a4paper,margin=1in]{geometry}
+
+% Graphics and colors
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+% Better typesetting
+\usepackage{microtype}
+
+% Hyperlinks
+\usepackage[hidelinks]{hyperref}
+
+% Bibliography
+\usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
+\addbibresource{refs.bib}
+
+% Code listings
+\usepackage{listings}
+\usepackage{courier}
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  backgroundcolor=\color{gray!5},
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray!70}\itshape,
+  stringstyle=\color{teal},
+  showstringspaces=false,
+  tabsize=2,
+}
+
+% Title page info
+\title{Decentralized Inheritance Protocol\\Report}
+\author{Noah Klaholz \\ and contributors}
+\date{\today}
+
+% Appendix settings
+\usepackage[toc,page]{appendix}
+
+% For nicer section headings
+\usepackage{sectsty}
+\allsectionsfont{\sffamily}
+
+\begin{document}
+
+% Title slide
+\begin{titlepage}
+  \centering
+  {\scshape\LARGE Decentralized Inheritance Protocol \par}
+  \vspace{1.5cm}
+  {\huge\bfseries Report\par}
+  \vspace{2cm}
+  {\Large Noah Klaholz \\ Department / Organization \par}
+  \vfill
+  A short project report for the Decentralized Inheritance Protocol implementation.\\
+  Refer to the repository for code and tests.
+  \vspace{1cm}
+  \vfill
+  {\large \today\par}
+\end{titlepage}
+
+% Table of contents
+\tableofcontents
+\clearpage
+
+\section{Introduction}
+This document contains a short report for the Decentralized Inheritance Protocol project. It provides an overview of the project, features implemented, and references to the codebase. The project README contains a roadmap and design notes which are reflected here.
+
+\section{Project Overview}
+Based on the repository README, the project aims to implement a smart-contract-based inheritance protocol with the following implemented features:
+\begin{itemize}
+  \item Beneficiary management logic (implemented and tested)
+  \item Transferring and withdrawing assets using a mock USDC token (implemented and tested)
+  \item State handling via check-ins to reset a liveness timer (implemented and tested)
+  \item Phase transitions (Active $\rightarrow$ Warning $\rightarrow$ Verification $\rightarrow$ Distribution) (implemented and tested)
+  \item Verification phase with mocked death certificates/death oracle (implemented and tested)
+  \item Payout logic with percentage-based shares (implemented and tested)
+\end{itemize}
+
+\section{Repository Structure}
+The repository contains a `contract/` folder with Hardhat configuration, Solidity contracts, tests and deployment artifacts, and a `client/` folder for potential frontend code. The `docs/` folder is used for documentation; this report lives in `docs/report`.
+
+\section{Usage and Build}
+The recommended cross-platform build uses the provided scripts in this folder. The scripts run `latexmk` where available or fall back to `pdflatex` + `biber` as necessary. The build process writes intermediary files to `docs/report/build/` which is ignored by git; only the resulting `report.pdf` and source files are kept in version control.
+
+\section{Appendix}
+Refer to the appendix for extra materials.
+
+\begin{appendices}
+\section{Sample Code Listing}
+Below is an example of how to include a code listing using the `listings` package. Replace with actual code when needed.
+
+\begin{lstlisting}[language=JavaScript,caption={Example JS snippet}]
+// Example: simple function
+function greet(name) {
+  return `Hello, ${name}`;
+}
+console.log(greet('World'));
+\end{lstlisting}
+
+\section{References}
+\printbibliography
+\end{appendices}
+
+\end{document}
+

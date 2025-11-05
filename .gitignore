@@ -1,2 +1,37 @@
 # IDE settings
 .idea
+
+# LaTeX build artifacts
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+*.bbl
+*.blg
+*.brf
+*.nlo
+*.nls
+*.ilg
+*.idx
+*.ind
+*.synctex.gz
+*.fdb_latexmk
+*.run.xml
+_minted*
+*.xdv
+
+# Ignore build directories for the report
+docs/report/build/
+
+# Keep PDFs and source files tracked
+!*.pdf
+!docs/report/*.pdf
+!docs/report/*.tex
+!docs/report/*.bib
