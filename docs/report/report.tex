@@ -48,24 +48,6 @@
 \clearpage
 
 \section{Introduction}
-This document contains a short report for the Decentralized Inheritance Protocol project. It provides an overview of the project, features implemented, and references to the codebase. The project README contains a roadmap and design notes which are reflected here.
-
-\section{Project Overview}
-Based on the repository README, the project aims to implement a smart-contract-based inheritance protocol with the following implemented features:
-\begin{itemize}
-  \item Beneficiary management logic (implemented and tested)
-  \item Transferring and withdrawing assets using a mock USDC token (implemented and tested)
-  \item State handling via check-ins to reset a liveness timer (implemented and tested)
-  \item Phase transitions (Active $\rightarrow$ Warning $\rightarrow$ Verification $\rightarrow$ Distribution) (implemented and tested)
-  \item Verification phase with mocked death certificates/death oracle (implemented and tested)
-  \item Payout logic with percentage-based shares (implemented and tested)
-\end{itemize}
-
-\section{Repository Structure}
-The repository contains a `contract/` folder with Hardhat configuration, Solidity contracts, tests and deployment artifacts, and a `client/` folder for potential frontend code. The `docs/` folder is used for documentation; this report lives in `docs/report`.
-
-\section{Usage and Build}
-The recommended cross-platform build uses the provided scripts in this folder. The scripts run `latexmk` where available or fall back to `pdflatex` + `biber` as necessary. The build process writes intermediary files to `docs/report/build/` which is ignored by git; only the resulting `report.pdf` and source files are kept in version control.
 
 \section{Appendix}
 Refer to the appendix for extra materials.
