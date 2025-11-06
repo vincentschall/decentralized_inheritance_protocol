@@ -1,29 +1,14 @@
-% report.tex - Boilerplate LaTeX report for Decentralized Inheritance Protocol
 \documentclass[11pt,a4paper]{article}
-
-% Encoding and language
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[english]{babel}
-
-% Page geometry
 \usepackage[a4paper,margin=1in]{geometry}
-
-% Graphics and colors
 \usepackage{graphicx}
 \usepackage{xcolor}
-
-% Better typesetting
 \usepackage[expansion=false]{microtype}
-
-% Hyperlinks
 \usepackage[hidelinks]{hyperref}
-
-% Bibliography
 \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
 \addbibresource{refs.bib}
-
-% Code listings
 \usepackage{listings}
 \lstdefinelanguage{JavaScript}{
     keywords={typeof, new, true, false, catch, function, return, null, switch, var, if, while, do, else, case, break},
@@ -48,37 +33,17 @@
   keepspaces=true
 }
 
-% Title page info
-\title{Decentralized Inheritance Protocol\\Report}
-\author{Noah Klaholz \\ and contributors}
-\date{\today}
+\title{Report: Decentralized Inheritance Protocol}
+\author{Noah Klaholz, Vincent Schall, Max Mendes Carvalho }
+\date{November 2025}
 
-% Appendix settings
 \usepackage[toc,page]{appendix}
-
-% For nicer section headings
 \usepackage{sectsty}
 \allsectionsfont{\sffamily}
 
 \begin{document}
 
-% Title slide
-\begin{titlepage}
-  \centering
-  {\scshape\LARGE Decentralized Inheritance Protocol \par}
-  \vspace{1.5cm}
-  {\huge\bfseries Report\par}
-  \vspace{2cm}
-  {\Large Noah Klaholz \\ Department / Organization \par}
-  \vfill
-  A short project report for the Decentralized Inheritance Protocol implementation.\\
-  Refer to the repository for code and tests.
-  \vspace{1cm}
-  \vfill
-  {\large \today\par}
-\end{titlepage}
-
-% Table of contents
+\maketitle
 \tableofcontents
 \clearpage
 
