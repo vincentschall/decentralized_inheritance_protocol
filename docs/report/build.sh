@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+latexmk -pdf -f -interaction=nonstopmode report.tex
 set -euo pipefail
 
 # Build script for report.tex (POSIX-compatible)
