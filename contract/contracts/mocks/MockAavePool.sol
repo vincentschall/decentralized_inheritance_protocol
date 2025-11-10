@@ -38,4 +38,8 @@ contract MockAavePool {
         usdc.transferFrom(address(this), to, yieldAmount);
         return yieldAmount;
     }
+
+    function getBalance(address _user) external view returns (uint256) {
+        return balances[_user];
+    }
 }
