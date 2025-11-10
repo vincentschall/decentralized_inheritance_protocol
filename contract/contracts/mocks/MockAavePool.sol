@@ -35,7 +35,7 @@ contract MockAavePool {
         uint256 yieldAmount = (amount * 105) / 100;
         balances[msg.sender] -= amount;
 
-        usdc.transferFrom(address(this), to, yieldAmount);
+        usdc.transfer( to, yieldAmount);
         return yieldAmount;
     }
 
