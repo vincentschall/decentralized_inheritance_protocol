@@ -5,12 +5,14 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {IDeathOracle} from "./mocks/IDeathOracle.sol";
+import {MockAavePool} from "./mocks/MockAavePool.sol";
 
 contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     IERC20 public immutable usdc;
     IDeathOracle public immutable deathOracle;
     address private notaryAddress;
+    MockAavePool public aavePool;
 
     /**
      * Stores address and payout percentage amount (0-100) of a beneficiary.
@@ -22,7 +24,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     Beneficiary[10] private _beneficiaries;
 
-    uint256 private _balance;
     State private _currentState;
 
     uint256 private _lastCheckIn;
@@ -48,12 +49,13 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Initializes a new InheritanceProtocol.
      * @param _usdcAddress address of the currency used (non-zero).
      */
-    constructor(address _usdcAddress, address _deathOracleAddress, address _notaryAddress) Ownable(msg.sender) {
+    constructor(address _usdcAddress, address _deathOracleAddress, address _notaryAddress, address _aavePoolAddress) Ownable(msg.sender) {
         require(_usdcAddress != address(0), "USDC address zero");
         require(_deathOracleAddress != address(0), "Death Oracle address zero");
         usdc = IERC20(_usdcAddress);
         deathOracle = IDeathOracle(_deathOracleAddress);
         notaryAddress = _notaryAddress;
+        aavePool = MockAavePool(_aavePoolAddress);
         _currentState = State.ACTIVE;
         _lastCheckIn = block.timestamp;
     }
@@ -256,11 +258,12 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         require(_amount > 0, "Amount has to be greater than zero.");
 
         usdc.transferFrom(msg.sender, address(this), _amount);
-        _balance += _amount;
 
-        //TODO add yield generating here -> Aave or something similar
+        usdc.approve(address(aavePool), _amount);
+
+        aavePool.supply(address(usdc), _amount, address(this));
+
         emit Deposited(_amount);
-
     }
 
     /**
@@ -270,9 +273,9 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     function withdraw(uint256 _amount) external onlyOwner nonReentrant onlyPreDistribution {
         checkIn();
         require(_amount > 0, "Amount has to be greater than zero.");
-        require(_balance >= _amount, "Insufficient balance");
+        require(getBalance() >= _amount, "Insufficient balance");
 
-        _balance -= _amount;
+        aavePool.withdraw(address(usdc), _amount, address(this));
 
         usdc.transfer(msg.sender, _amount);
         emit Withdrawn(_amount);
@@ -307,18 +310,15 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         _called = true;
         uint256 count = getActiveCount();
         Beneficiary[] memory activeBeneficiaries = getActiveBeneficiaries();
-        uint256 originalBalance = _balance;
+        uint256 balanceRemainingInPool = aavePool.getBalance(address(this));
+        uint256 withdrawnAmount = aavePool.withdraw(address(usdc), balanceRemainingInPool, address(this));
+        uint256 originalBalance = withdrawnAmount;
         for (uint256 i=0; i<count; i++) {
             Beneficiary memory beneficiary = activeBeneficiaries[i];
             uint256 amount = beneficiary.amount;
             address payoutAddress = beneficiary.payoutAddress;
 
             uint actualAmount = (originalBalance * amount) / MAX_PERCENTAGE;
-
-            // decision made: change balance value (should be 0 at the end)
-            // pros: good for checking / testing
-            // cons: just setting it to 0 would be less error-prone
-            _balance -= actualAmount;
 
             usdc.transfer( payoutAddress, actualAmount);
             emit PayoutMade(actualAmount, payoutAddress);
@@ -356,7 +356,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * @return the balance of the combined deposited funds.
      */
     function getBalance() public view returns (uint256) {
-        return _balance; // If using Aave this might not work anymore
+        return aavePool.getBalance(address(this));
     }
 
     /**

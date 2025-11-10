@@ -2,6 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./MockUSDC.sol";  // Add this import (adjust path if needed)
 
 /**
  * Mock of aave pool. Follows this documentation:
@@ -9,11 +10,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * Only implements the functions that are needed for this project.
  */
 contract MockAavePool {
-    IERC20 public immutable usdc;
+    MockUSDC public immutable usdc;
     mapping(address => uint256) public balances;
 
     constructor(address _usdcAddress) {
-        usdc = IERC20(_usdcAddress);
+        usdc = MockUSDC(_usdcAddress);
     }
 
     function supply(address asset, uint256 amount, address onBehalfOf) external {
@@ -33,9 +34,12 @@ contract MockAavePool {
 
         // fake interest (5%)
         uint256 yieldAmount = (amount * 105) / 100;
+
+        usdc.mint(address(this), yieldAmount - amount);
+
         balances[msg.sender] -= amount;
 
-        usdc.transfer( to, yieldAmount);
+        usdc.transfer(to, yieldAmount);
         return yieldAmount;
     }
 

@@ -1,13 +1,14 @@
 import {expect} from "chai";
 import {ZeroAddress} from "ethers";
 import hre from "hardhat";
-import type {InheritanceProtocol, MockUSDC, MockDeathOracle} from "../types/ethers-contracts/index.js";
+import type {InheritanceProtocol, MockUSDC, MockDeathOracle, MockAavePool} from "../types/ethers-contracts/index.js";
 
 let connectedEthers: Awaited<ReturnType<typeof hre.network.connect>>['ethers'];
 
 describe("Inheritance Protocol", function () {
     let inheritanceProtocol: InheritanceProtocol;
     let mockUSDC: MockUSDC;
+
     type SignerType = Awaited<ReturnType<typeof connectedEthers.getSigners>>[number];
     let owner: SignerType;
     let addrs: SignerType[];
@@ -24,9 +25,20 @@ describe("Inheritance Protocol", function () {
     let notary: SignerType;
 
     let mockDeathOracle: MockDeathOracle;
+    let mockAavePool: MockAavePool;
 
     const USDC_DECIMALS = 6;
     const INITIAL_USDC_BALANCE = 10000n * (10n ** BigInt(USDC_DECIMALS));
+
+    // fund handling test constants
+    const DEPOSIT_AMOUNT = 1000n * (10n ** BigInt(USDC_DECIMALS));
+    const WITHDRAW_PARTIAL_AMOUNT = 500n * (10n ** BigInt(USDC_DECIMALS));
+
+    const YIELD_FACTOR = 105n;
+    const YIELD_DENOM = 100n;
+    const PARTIAL_YIELD = (WITHDRAW_PARTIAL_AMOUNT * 5n) / YIELD_DENOM;
+    const FULL_YIELD = (DEPOSIT_AMOUNT * 5n) / YIELD_DENOM;
+    const FULL_WITH_YIELD = (DEPOSIT_AMOUNT * YIELD_FACTOR) / YIELD_DENOM;
 
     before(async function () {
         const {ethers} = await hre.network.connect();
@@ -38,14 +50,20 @@ describe("Inheritance Protocol", function () {
         const MockUSDCFactory = await connectedEthers.getContractFactory("MockUSDC");
         mockUSDC = await MockUSDCFactory.deploy();
 
-        const MockDeathOracle = await connectedEthers.getContractFactory("MockDeathOracle");
-        mockDeathOracle = await MockDeathOracle.deploy();
+        const MockDeathOracleFactory = await connectedEthers.getContractFactory("MockDeathOracle");
+        mockDeathOracle = await MockDeathOracleFactory.deploy();
+
+        const MockAavePoolFactory = await connectedEthers.getContractFactory("MockAavePool");
+        mockAavePool = await MockAavePoolFactory.deploy(
+            await mockUSDC.getAddress()
+        );
 
         const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
         inheritanceProtocol = await InheritanceProtocolFactory.deploy(
             await mockUSDC.getAddress(),
             await mockDeathOracle.getAddress(),
-            notary.address
+            notary.address,
+            await mockAavePool.getAddress()
         );
 
         await mockUSDC.mint(owner.address, INITIAL_USDC_BALANCE);
@@ -407,8 +425,6 @@ describe("Inheritance Protocol", function () {
     });
 
     describe("Funds Handling", function () {
-        const DEPOSIT_AMOUNT = 1000n * (10n ** BigInt(USDC_DECIMALS));
-        const WITHDRAW_PARTIAL_AMOUNT = 500n * (10n ** BigInt(USDC_DECIMALS));
 
         describe("Deposits", function () {
             it("Should deposit funds successfully", async function () {
@@ -420,7 +436,7 @@ describe("Inheritance Protocol", function () {
                 await expect(tx).to.emit(inheritanceProtocol, "Deposited").withArgs(DEPOSIT_AMOUNT);
 
                 expect(await inheritanceProtocol.getBalance()).to.equal(initialProtocolBalance + DEPOSIT_AMOUNT);
-                expect(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress())).to.equal(initialContractBalance + DEPOSIT_AMOUNT);
+                expect(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress())).to.equal(initialContractBalance);
                 expect(await mockUSDC.balanceOf(owner.address)).to.equal(initialOwnerBalance - DEPOSIT_AMOUNT);
             });
 
@@ -470,7 +486,7 @@ describe("Inheritance Protocol", function () {
                 await expect(tx).to.emit(inheritanceProtocol, "Withdrawn").withArgs(WITHDRAW_PARTIAL_AMOUNT);
 
                 expect(await inheritanceProtocol.getBalance()).to.equal(initialProtocolBalance - WITHDRAW_PARTIAL_AMOUNT);
-                expect(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress())).to.equal(initialContractBalance - WITHDRAW_PARTIAL_AMOUNT);
+                expect(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress())).to.equal(initialContractBalance + PARTIAL_YIELD);
                 expect(await mockUSDC.balanceOf(owner.address)).to.equal(initialOwnerBalance + WITHDRAW_PARTIAL_AMOUNT);
             });
 
@@ -483,7 +499,7 @@ describe("Inheritance Protocol", function () {
                 await expect(tx).to.emit(inheritanceProtocol, "Withdrawn").withArgs(DEPOSIT_AMOUNT);
 
                 expect(await inheritanceProtocol.getBalance()).to.equal(initialProtocolBalance - DEPOSIT_AMOUNT);
-                expect(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress())).to.equal(initialContractBalance - DEPOSIT_AMOUNT);
+                expect(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress())).to.equal(initialContractBalance + FULL_YIELD);
                 expect(await mockUSDC.balanceOf(owner.address)).to.equal(initialOwnerBalance + DEPOSIT_AMOUNT);
             });
 
@@ -551,9 +567,9 @@ describe("Inheritance Protocol", function () {
                 expect(await inheritanceProtocol.getBalance()).to.equal(deposit1 + deposit2 - withdraw1);
             });
 
-            it("getBalance should reflect contract's USDC balance accurately", async function () {
+            it("getBalance should reflect principal in Aave pool accurately", async function () {
                 await inheritanceProtocol.deposit(DEPOSIT_AMOUNT);
-                expect(await inheritanceProtocol.getBalance()).to.equal(await mockUSDC.balanceOf(await inheritanceProtocol.getAddress()));
+                expect(await inheritanceProtocol.getBalance()).to.equal(DEPOSIT_AMOUNT);
             });
         });
     });
@@ -635,7 +651,7 @@ describe("Inheritance Protocol", function () {
             const b1Before = await mockUSDC.balanceOf(beneficiary1.address);
             const b2Before = await mockUSDC.balanceOf(beneficiary2.address);
             const contractBefore = await mockUSDC.balanceOf(contractAddress);
-            expect(contractBefore).to.equal(DEPOSIT_AMOUNT);
+            expect(contractBefore).to.equal(0n);
 
             // Confirm death before updating state so a single call transitions all the way to DISTRIBUTION
             await mockDeathOracle.setDeathStatus(owner.address, true, "0xdeadbeef");
@@ -646,7 +662,7 @@ describe("Inheritance Protocol", function () {
 
             const tx = await inheritanceProtocol.updateState();
 
-            const half = DEPOSIT_AMOUNT / 2n;
+            const half = FULL_WITH_YIELD / 2n;
             await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(half, beneficiary1.address);
             await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(half, beneficiary2.address);
 
@@ -666,7 +682,8 @@ describe("Inheritance Protocol", function () {
                 inheritanceProtocol = await InheritanceProtocolFactory.deploy(
                     await mockUSDC.getAddress(),
                     await mockDeathOracle.getAddress(),
-                    notary.address
+                    notary.address,
+                    await mockAavePool.getAddress()
                 );
             });
 
@@ -775,7 +792,8 @@ describe("Inheritance Protocol", function () {
                 inheritanceProtocol = await InheritanceProtocolFactory.deploy(
                     await mockUSDC.getAddress(),
                     await mockDeathOracle.getAddress(),
-                    await notary.getAddress()
+                    notary.address,
+                    await mockAavePool.getAddress()
                 );
                 await mockUSDC.connect(owner).approve(
                     await inheritanceProtocol.getAddress(),
@@ -839,10 +857,13 @@ describe("Inheritance Protocol", function () {
 
                 // One more update should payout
                 const tx = await inheritanceProtocol.updateState();
-                const q1 = (deposit * 25n) / 100n;
-                const q2 = (deposit * 75n) / 100n;
-                // await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q1, beneficiary1.address);
-                // await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q2, beneficiary2.address);
+
+                const fullDepositYield = (deposit * YIELD_FACTOR) / YIELD_DENOM;
+                const q1 = (fullDepositYield * 25n) / 100n;
+                const q2 = (fullDepositYield * 75n) / 100n;
+
+                await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q1, beneficiary1.address);
+                await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q2, beneficiary2.address);
 
                 expect(await inheritanceProtocol.getState()).to.equal(3);
                 expect(await mockUSDC.balanceOf(beneficiary1.address)).to.equal(b1Before + q1);
