@@ -17,7 +17,7 @@ async function main() {
     console.log("Beneficiary2: ", beneficiary2.address);
     console.log("Beneficiary3: ", beneficiary3.address);
 
-    const { mockUSDC, mockDeathOracle, inheritanceProtocol } = await connection.ignition.deploy(
+    const { mockUSDC, mockDeathOracle, mockAavePool, inheritanceProtocol } = await connection.ignition.deploy(
         DeployModule, {
             parameters: {
                 Deploy: {
@@ -29,6 +29,7 @@ async function main() {
 
     console.log("MockUSDC deployed to: ", await mockUSDC.getAddress());
     console.log("MockDeathOracle deployed to: ", await mockDeathOracle.getAddress());
+    console.log("MockAavePool deployed to: ", await mockAavePool.getAddress());
     console.log("InheritanceProtocol deployed to: ", await inheritanceProtocol.getAddress());
 
     const initialBalance = connection.ethers.parseUnits("10000", 6); // 10,000 USDC
@@ -41,6 +42,7 @@ async function main() {
         contracts: {
             MockUSDC: await mockUSDC.getAddress(),
             MockDeathOracle: await mockDeathOracle.getAddress(),
+            MockAavePool: await mockAavePool.getAddress(),
             InheritanceProtocol: await inheritanceProtocol.getAddress()
         },
         accounts: {
