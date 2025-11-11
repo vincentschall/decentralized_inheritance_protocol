@@ -53,8 +53,8 @@ export default function EventLogger({ logs, onClear }: EventLoggerProps) {
   };
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 h-full flex flex-col max-h-[600px]">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h2 className="text-2xl font-bold text-white flex items-center gap-2">
           <Terminal className="w-6 h-6 text-cyan-400" />
           Event Log
@@ -69,8 +69,8 @@ export default function EventLogger({ logs, onClear }: EventLoggerProps) {
       </div>
 
       {/* Log Container */}
-      <div className="flex-1 bg-black/20 rounded-xl border border-white/10 overflow-hidden flex flex-col">
-        <div className="flex-1 overflow-y-auto space-y-1 p-4">
+      <div className="flex-1 bg-black/20 rounded-xl border border-white/10 overflow-hidden flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto space-y-1 p-4" style={{ maxHeight: '400px' }}>
           {logs.length === 0 ? (
             <div className="flex items-center justify-center h-full text-gray-500">
               <p>Waiting for events...</p>
@@ -97,7 +97,7 @@ export default function EventLogger({ logs, onClear }: EventLoggerProps) {
       </div>
 
       {/* Log Count */}
-      <p className="text-gray-400 text-xs mt-4">
+      <p className="text-gray-400 text-xs mt-4 flex-shrink-0">
         {logs.length} event{logs.length !== 1 ? "s" : ""}
       </p>
     </div>

@@ -102,45 +102,74 @@ export default function Home() {
         const provider = new ethers.JsonRpcProvider(RPC_URL);
         const contract = await getInheritanceProtocolReadonly(provider);
 
-        contract.on("CheckedIn", () => {
+        // Wrap event handlers to catch errors silently
+        const safeHandler = (handler: (...args: any[]) => void) => {
+          return (...args: any[]) => {
+            try {
+              handler(...args);
+            } catch (err) {
+              // Silently ignore event handler errors
+            }
+          };
+        };
+
+        contract.on("CheckedIn", safeHandler(() => {
           addLog("✓ Owner checked in", "event");
           loadContractData();
-        });
+        }));
 
-        contract.on("Deposited", (amount) => {
+        contract.on("Deposited", safeHandler((amount) => {
           addLog(`✓ Deposited ${ethers.formatUnits(amount, 6)} USDC`, "event");
           loadContractData();
-        });
+        }));
 
-        contract.on("Withdrawn", (amount) => {
+        contract.on("Withdrawn", safeHandler((amount) => {
           addLog(`✓ Withdrew ${ethers.formatUnits(amount, 6)} USDC`, "event");
           loadContractData();
-        });
+        }));
 
-        contract.on("StateChanged", (_, from, to) => {
+        contract.on("StateChanged", safeHandler((_, from, to) => {
           const stateNames = ["ACTIVE", "WARNING", "VERIFICATION", "DISTRIBUTION"];
           addLog(
             `State changed: ${stateNames[from]} → ${stateNames[to]}`,
             "warning"
           );
           loadContractData();
-        });
+        }));
 
-        contract.on("BeneficiaryAdded", (addr, amount) => {
+        contract.on("BeneficiaryAdded", safeHandler((addr, amount) => {
           addLog(`✓ Beneficiary added: ${addr.slice(0, 6)}...${addr.slice(-4)} (${amount}%)`, "event");
           loadContractData();
-        });
+        }));
 
-        contract.on("BeneficiaryRemoved", (addr) => {
+        contract.on("BeneficiaryRemoved", safeHandler((addr) => {
           addLog(`✓ Beneficiary removed: ${addr.slice(0, 6)}...${addr.slice(-4)}`, "event");
           loadContractData();
+        }));
+
+        contract.on("PayoutMade", safeHandler((amount, payoutAddress) => {
+          addLog(
+            `💰 Payout: ${ethers.formatUnits(amount, 6)} USDC → ${payoutAddress.slice(0, 6)}...${payoutAddress.slice(-4)}`,
+            "success"
+          );
+          loadContractData();
+        }));
+
+        // Suppress provider errors for unrecognized selectors
+        provider.on("error", () => {
+          // Silently ignore provider errors
         });
       } catch (err) {
-        console.error("Failed to setup event listeners:", err);
+        // Silently ignore setup errors
       }
     };
 
     setupListeners();
+
+    // Cleanup function to remove listeners
+    return () => {
+      // Event listeners will be cleaned up automatically when component unmounts
+    };
   }, [signer, addLog, loadContractData]);
 
   const handleCheckIn = async () => {
@@ -317,7 +346,30 @@ export default function Home() {
       addLog("Death certificate transaction sent. Waiting for confirmation...", "info");
       await tx.wait();
       addLog("✓ Death certificate uploaded successfully!", "success");
+      
+      // Reload contract data to check current state
       await loadContractData();
+      
+      // Automatically transition to DISTRIBUTION if deceased
+      if (deceased) {
+        // Check current state - need to be in VERIFICATION to transition to DISTRIBUTION
+        const currentState = await contract.getState();
+        
+        // If not in VERIFICATION, first transition to VERIFICATION
+        if (currentState !== 2) { // 2 = VERIFICATION
+          addLog("Transitioning to VERIFICATION state...", "info");
+          const changeStateTx = await contract.changeState(2); // VERIFICATION = 2
+          await changeStateTx.wait();
+          addLog("✓ Contract state changed to VERIFICATION", "success");
+        }
+        
+        // Now update state to trigger transition to DISTRIBUTION
+        addLog("Updating contract state to trigger distribution...", "info");
+        const updateTx = await contract.updateState();
+        await updateTx.wait();
+        addLog("✓ Contract state updated! Distribution phase initiated.", "success");
+        await loadContractData();
+      }
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Failed to upload death certificate";
       addLog(errorMsg, "error");
@@ -358,60 +410,227 @@ export default function Home() {
               Make sure MetaMask is installed and set to the local Hardhat network (localhost:8545)
             </p>
           </div>
-        ) : (
+        ) : isNotary ? (
+          // NOTARY VIEW - Minimal interface
           <div className="space-y-6">
-            {/* Check-in Section - Prominent CTA */}
-            <div className="col-span-full">
-              <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
+            {/* Notary Header */}
+            <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-2xl p-6 border border-purple-500/30">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-purple-500/30 rounded-full flex items-center justify-center">
+                  <span className="text-2xl">⚖️</span>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Notary Dashboard</h2>
+                  <p className="text-purple-200 text-sm">Authorized notary access</p>
+                </div>
+              </div>
+              {/* Current State Info */}
+              <div className="mt-4 pt-4 border-t border-purple-500/20">
+                <p className="text-gray-300 text-sm">
+                  Current Contract State: <span className="font-semibold text-white">{["ACTIVE", "WARNING", "VERIFICATION", "DISTRIBUTION"][state]}</span>
+                </p>
+              </div>
             </div>
 
-            {/* Notary Panel - Only visible to notary */}
-            {isNotary && (
-              <NotaryPanel
-                isNotary={isNotary}
-                onUploadDeathCertificate={handleUploadDeathCertificate}
-                onUpdateState={handleUpdateState}
-                isLoading={loading}
-              />
-            )}
+            {/* Notary Actions */}
+            <NotaryPanel
+              isNotary={isNotary}
+              onUploadDeathCertificate={handleUploadDeathCertificate}
+              onUpdateState={handleUpdateState}
+              isLoading={loading}
+            />
 
-            {/* Main Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* State and Balance */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <StateDisplay
-                    state={state}
-                    lastCheckIn={lastCheckIn}
-                    onUpdateState={handleUpdateState}
-                    isLoading={loading}
-                  />
-                  <BalanceDisplay balance={balance} depositedPercentage={payoutPercentage} />
+            {/* Event Logger - Right side for notary */}
+            <div className="lg:col-span-1">
+              <EventLogger logs={logs} onClear={clearLogs} />
+            </div>
+          </div>
+        ) : (
+          // OWNER VIEW - Changes based on state
+          <div className="space-y-6">
+            {state === 0 ? (
+              // ACTIVE STATE - Full functionality
+              <>
+                {/* Check-in Section - Prominent CTA */}
+                <div className="col-span-full">
+                  <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
                 </div>
 
-                {/* Beneficiaries */}
-                <BeneficiariesList
-                  beneficiaries={beneficiaries}
-                  onAddBeneficiary={handleAddBeneficiary}
-                  onRemoveBeneficiary={handleRemoveBeneficiary}
-                  isLoading={loading}
-                  maxBeneficiaries={10}
-                />
+                {/* Main Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Left Column */}
+                  <div className="lg:col-span-2 space-y-6">
+                    {/* State and Balance */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <StateDisplay
+                        state={state}
+                        lastCheckIn={lastCheckIn}
+                        onUpdateState={handleUpdateState}
+                        isLoading={loading}
+                      />
+                      <BalanceDisplay balance={balance} depositedPercentage={payoutPercentage} />
+                    </div>
 
-                {/* Funds Manager */}
-                <FundsManager
-                  onDeposit={handleDeposit}
-                  onWithdraw={handleWithdraw}
-                  isLoading={loading}
-                />
-              </div>
+                    {/* Beneficiaries */}
+                    <BeneficiariesList
+                      beneficiaries={beneficiaries}
+                      onAddBeneficiary={handleAddBeneficiary}
+                      onRemoveBeneficiary={handleRemoveBeneficiary}
+                      isLoading={loading}
+                      maxBeneficiaries={10}
+                    />
 
-              {/* Right Column - Event Logger */}
-              <div className="lg:col-span-1">
-                <EventLogger logs={logs} onClear={clearLogs} />
-              </div>
-            </div>
+                    {/* Funds Manager */}
+                    <FundsManager
+                      onDeposit={handleDeposit}
+                      onWithdraw={handleWithdraw}
+                      isLoading={loading}
+                    />
+                  </div>
+
+                  {/* Right Column - Event Logger */}
+                  <div className="lg:col-span-1">
+                    <EventLogger logs={logs} onClear={clearLogs} />
+                  </div>
+                </div>
+              </>
+            ) : state === 1 ? (
+              // WARNING STATE - Urgent check-in needed
+              <>
+                {/* Urgent Warning Banner */}
+                <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-2xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-4xl">⚠️</span>
+                    <div>
+                      <h2 className="text-2xl font-bold text-yellow-200">Warning: Check-in Overdue</h2>
+                      <p className="text-yellow-300">You missed your check-in deadline. Please check in immediately!</p>
+                    </div>
+                  </div>
+                  <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
+                </div>
+
+                {/* Main Grid - Limited functionality */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <StateDisplay
+                        state={state}
+                        lastCheckIn={lastCheckIn}
+                        onUpdateState={handleUpdateState}
+                        isLoading={loading}
+                      />
+                      <BalanceDisplay balance={balance} depositedPercentage={payoutPercentage} />
+                    </div>
+                    <BeneficiariesList
+                      beneficiaries={beneficiaries}
+                      onAddBeneficiary={handleAddBeneficiary}
+                      onRemoveBeneficiary={handleRemoveBeneficiary}
+                      isLoading={loading}
+                      maxBeneficiaries={10}
+                    />
+                  </div>
+                  <div className="lg:col-span-1">
+                    <EventLogger logs={logs} onClear={clearLogs} />
+                  </div>
+                </div>
+              </>
+            ) : state === 2 ? (
+              // VERIFICATION STATE - Death verification in progress
+              <>
+                <div className="bg-orange-500/20 border-2 border-orange-500 rounded-2xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-4xl">🔍</span>
+                    <div>
+                      <h2 className="text-2xl font-bold text-orange-200">Verification Phase</h2>
+                      <p className="text-orange-300">Your death certificate is being verified. No administrative actions available.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Read-only view */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <StateDisplay
+                        state={state}
+                        lastCheckIn={lastCheckIn}
+                        onUpdateState={handleUpdateState}
+                        isLoading={loading}
+                      />
+                      <BalanceDisplay balance={balance} depositedPercentage={payoutPercentage} />
+                    </div>
+                    <div className="bg-white/5 rounded-xl p-6 border border-white/10">
+                      <h3 className="text-xl font-bold text-white mb-4">Beneficiaries</h3>
+                      {beneficiaries.length === 0 ? (
+                        <p className="text-gray-400">No beneficiaries configured</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {beneficiaries.map((b, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                              <span className="text-white font-mono text-sm">{b.payoutAddress.slice(0, 6)}...{b.payoutAddress.slice(-4)}</span>
+                              <span className="text-gray-300">{b.amount}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="lg:col-span-1">
+                    <EventLogger logs={logs} onClear={clearLogs} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              // DISTRIBUTION STATE - Payouts completed (compact view)
+              <>
+                <div className="bg-red-500/20 border-2 border-red-500 rounded-2xl p-4">
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">✅</span>
+                    <div>
+                      <h2 className="text-xl font-bold text-red-200">Distribution Complete</h2>
+                      <p className="text-red-300 text-sm">All assets have been distributed to beneficiaries.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compact summary view */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2 space-y-4">
+                    {/* Compact State and Balance */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <p className="text-gray-300 text-xs mb-1">State</p>
+                        <p className="text-lg font-bold text-red-400">DISTRIBUTION</p>
+                      </div>
+                      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                        <p className="text-gray-300 text-xs mb-1">Balance</p>
+                        <p className="text-lg font-bold text-white">0 USDC</p>
+                      </div>
+                    </div>
+                    
+                    {/* Scrollable Beneficiaries List */}
+                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                      <h3 className="text-lg font-bold text-white mb-3">Final Beneficiaries</h3>
+                      {beneficiaries.length === 0 ? (
+                        <p className="text-gray-400 text-sm">No beneficiaries were configured</p>
+                      ) : (
+                        <div className="space-y-2 max-h-64 overflow-y-auto">
+                          {beneficiaries.map((b, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
+                              <span className="text-white font-mono text-xs">{b.payoutAddress.slice(0, 6)}...{b.payoutAddress.slice(-4)}</span>
+                              <span className="text-green-400 font-semibold text-sm">{b.amount}% ✓ Paid</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="lg:col-span-1">
+                    <EventLogger logs={logs} onClear={clearLogs} />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

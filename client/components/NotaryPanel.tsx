@@ -27,18 +27,7 @@ export default function NotaryPanel({
   };
 
   return (
-    <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-2xl p-6 border border-purple-500/30 shadow-xl">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 bg-purple-500/30 rounded-full flex items-center justify-center">
-          <span className="text-2xl">⚖️</span>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-white">Notary Panel</h2>
-          <p className="text-purple-200 text-sm">You are the designated notary</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
+    <div className="space-y-4">
         {/* Death Certificate Section */}
         <div className="bg-black/20 rounded-xl p-4 border border-purple-500/20">
           <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
@@ -101,7 +90,6 @@ export default function NotaryPanel({
             {isLoading ? "Updating..." : "Update State"}
           </button>
         </div>
-      </div>
     </div>
   );
 }
