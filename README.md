@@ -35,8 +35,8 @@ not definitive and not in-order.
     - [x] Tested
 
 ### Client / UX
-- [ ] **Basic setup: view functionality**
-- [ ] **Interaction with Deployed InheritanceProtocol contract (Deposit, Withdraw, Yield / View account, Beneficiary Management, CheckIns, Death verification)**
+- [x] **Basic setup: view functionality**
+- [x] **Interaction with Deployed InheritanceProtocol contract (Deposit, Withdraw, Yield / View account, Beneficiary Management, CheckIns, Death verification)**
 
 ## Hardhat version
 
