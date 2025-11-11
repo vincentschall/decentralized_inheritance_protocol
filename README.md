@@ -30,17 +30,9 @@ not definitive and not in-order.
 - **Payout logic (trigger distribution with percentage-based shares)**
     - [x] Implemented
     - [x] Tested
-
-### Yield and Vesting Integration
 - **Yield generation**
-    - [ ] Implemented
-    - [ ] Tested
-- **Vesting contract (time-locked claims for beneficiaries with unlock schedules)**
-    - [ ] Implemented
-    - [ ] Tested
-- **Integration: hook yield/vesting into payouts (deploy per-beneficiary vesting on distribution)**
-    - [ ] Implemented
-    - [ ] Tested
+    - [x] Implemented
+    - [x] Tested
 
 ### Client / UX
 - [ ] **Basic setup: view functionality**
