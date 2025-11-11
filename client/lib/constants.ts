@@ -19,5 +19,5 @@ export const STATE_DESCRIPTIONS: Record<number, string> = {
   3: "Distribution - Assets being distributed to beneficiaries",
 };
 
-export const RPC_URL = "http://localhost:8545";
-export const CHAIN_ID = 31337; // Hardhat local chain ID
+export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "http://localhost:8545";
+export const CHAIN_ID = parseInt(process.env.NEXT_PUBLIC_CHAIN_ID || "1337");

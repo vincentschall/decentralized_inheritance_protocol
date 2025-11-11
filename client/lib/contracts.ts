@@ -30,8 +30,9 @@ export async function loadDeploymentInfo(): Promise<DeploymentInfo> {
     if (!response.ok) {
       throw new Error(`Failed to load deployment info: ${response.statusText}`);
     }
-    deploymentInfo = await response.json();
-    return deploymentInfo;
+    const data = await response.json() as DeploymentInfo;
+    deploymentInfo = data;
+    return data;
   } catch (error) {
     console.error("Error loading deployment info:", error);
     throw new Error("Could not load contract deployment information. Make sure the backend is running.");

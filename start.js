@@ -23,8 +23,8 @@ process.on("SIGINT", () => {
 
 // Give the node a few seconds to boot
 setTimeout(() => {
-    console.log("Running deploy script...");
-    const deploy = run("npx", ["hardhat", "run", "scripts/deploy.js", "--network", "localhost"], {
+    console.log("Running auto-deploy script (checks if contracts exist before deploying)...");
+    const deploy = run("npx", ["hardhat", "run", "scripts/auto-deploy.js", "--network", "localhost"], {
         cwd: "contract",
     });
 

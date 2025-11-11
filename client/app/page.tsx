@@ -9,6 +9,7 @@ import BeneficiariesList from "@/components/BeneficiariesList";
 import FundsManager from "@/components/FundsManager";
 import CheckInButton from "@/components/CheckInButton";
 import EventLogger, { LogEntry } from "@/components/EventLogger";
+import NotaryPanel from "@/components/NotaryPanel";
 import {
   getInheritanceProtocolContract,
   getUSDCContract,
@@ -28,6 +29,7 @@ export default function Home() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isNotary, setIsNotary] = useState(false);
 
   const addLog = useCallback(
     (
@@ -274,17 +276,55 @@ export default function Home() {
     }
   };
 
-  const handleConnect = (newSigner: ethers.Signer, newAddress: string) => {
+  const handleConnect = async (newSigner: ethers.Signer, newAddress: string) => {
     setSigner(newSigner);
     setAddress(newAddress);
     addLog(`Connected wallet: ${newAddress.slice(0, 6)}...${newAddress.slice(-4)}`, "success");
     setError("");
+    
+    // Check if connected address is the notary
+    try {
+      const deploymentInfo = await loadDeploymentInfo();
+      if (newAddress.toLowerCase() === deploymentInfo.accounts.notary.toLowerCase()) {
+        setIsNotary(true);
+        addLog("🔔 Notary access granted", "info");
+      } else {
+        setIsNotary(false);
+      }
+    } catch (err) {
+      console.error("Failed to load deployment info:", err);
+    }
   };
 
   const handleDisconnect = () => {
     setSigner(null);
     setAddress("");
+    setIsNotary(false);
     addLog("Wallet disconnected", "info");
+  };
+
+  const handleUploadDeathCertificate = async (deceased: boolean) => {
+    if (!signer) return;
+    setLoading(true);
+    try {
+      addLog("Uploading death certificate...", "info");
+      const contract = await getInheritanceProtocolContract(signer);
+      
+      // Create a simple proof (in production this would be a real proof)
+      const proof = ethers.toUtf8Bytes("DEATH_CERTIFICATE_PROOF");
+      
+      const tx = await contract.uploadDeathVerification(deceased, proof);
+      addLog("Death certificate transaction sent. Waiting for confirmation...", "info");
+      await tx.wait();
+      addLog("✓ Death certificate uploaded successfully!", "success");
+      await loadContractData();
+    } catch (err: any) {
+      const errorMsg = err.reason || err.message || "Failed to upload death certificate";
+      addLog(errorMsg, "error");
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -324,6 +364,16 @@ export default function Home() {
             <div className="col-span-full">
               <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
             </div>
+
+            {/* Notary Panel - Only visible to notary */}
+            {isNotary && (
+              <NotaryPanel
+                isNotary={isNotary}
+                onUploadDeathCertificate={handleUploadDeathCertificate}
+                onUpdateState={handleUpdateState}
+                isLoading={loading}
+              />
+            )}
 
             {/* Main Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
