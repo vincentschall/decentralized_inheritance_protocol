@@ -34,8 +34,8 @@ setTimeout(() => {
             process.exit(code);
         }
 
-        // Optional: copy deployment-info.json to your frontend (uncomment below)
-        /*try {
+        // Copy deployment-info.json to frontend
+        try {
             const sourcePath = path.join("contract", "deployment-info.json");
             const destPath = path.join("client", "public", "deployment-info.json");
             const publicDir = path.join("client", "public");
@@ -45,10 +45,10 @@ setTimeout(() => {
             }
 
             fs.copyFileSync(sourcePath, destPath);
-            console.log("Copied deployment-info.json to client/public/");
+            console.log("✓ Copied deployment-info.json to client/public/");
         } catch (error) {
             console.error("Failed to copy deployment-info.json:", error.message);
-        }*/
+        }
 
         // Optionally start frontend (uncomment below)
         // console.log("Starting frontend...");

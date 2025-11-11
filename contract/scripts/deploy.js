@@ -59,6 +59,10 @@ async function main() {
     fs.writeFileSync("./deployment-info.json", JSON.stringify(deploymentInfo, null, 2));
     console.log("Deployment info saved to deployment-info.json");
 
+    // Copy to client/public/
+    fs.copyFileSync("./deployment-info.json", "../client/public/deployment-info.json");
+    console.log("✓ Copied deployment-info.json to client/public/");
+
 }
 
 main().catch((error) => {
