@@ -86,16 +86,26 @@
 		\tableofcontents
 		\clearpage
 
-		\section{Introduction}
-		No one can escape death - but what happens to your crypto when you die? According to~\parencite{Bidget2025}, it is estimated that around 3.7 million Bitcoin are lost and unrecoverable. One of the top reasons is death: crypto holders that passed away and failed to share access information with heirs will be responsible for inaccessible funds.\newline
-		Traditional inheritance systems are flawed: they take very long, are expensive and more often than not lead to conflicts within heirs. We want to solve these problems by introducing a decentralized inheritance protocol.\newline
-		The idea is as follows: anyone can create a will by deploying the inheritance protocol contract. After that he can deposit coins, tokens and assets, as well as define beneficiaries or heirs by adding their wallet addresses. For each beneficiary, the owner can define a payout amount as percentage of the total deposited assets.\newline
-		Furthermore, deposited assets are invested using [TODO add vesting protocol]. This allows the balance to grow instead of laying dry.\newline
-		The owner has to check in at least every 90 days to verify that he's still alive. As long as these check-ins occur, there will be no payout. In case of death, trusted oracles are used to verify the death via death certificates, before initiating payout.
+		\section{Introduction}\label{sec:introduction}
+        No one can escape death - but what happens to your crypto when you die?
+        According to~\parencite{Bidget2025}, it is estimated that around 3.7 million Bitcoin are lost and unrecoverable.
+        One of the top reasons is death: crypto holders that passed away and failed to share access information with heirs will be responsible for inaccessible funds.\newline
+		Traditional inheritance systems are flawed: they take very long, are expensive and more often than not lead to conflict between the heirs.
+        We want to solve these problems by introducing a decentralized inheritance protocol.\newline
+		The idea is as follows: anyone can create a will by deploying the inheritance protocol contract.
+        After that depositing coins, tokens and assets, as well as defining beneficiaries or heirs by adding their wallet addresses, is quick and easy with function calls to the contract.
+        For each beneficiary, the owner can define a payout amount as percentage of the total deposited assets.\newline
+		Furthermore, deposited assets are invested using Aave\footnotemark.
+        This allows the balance to grow instead of laying dry.\newline
+		The owner has to check in at least every 90 days to verify that he's still alive.
+        As long as these check-ins occur, there will be no payout.
+        In case of death, trusted oracles (in most cases a notary) are used to verify the death via death certificates, before initiating payout.
 
-		\section{Appendix}
+        \footnote{Aave — a decentralized lending protocol: supply crypto to earn interest via liquidity pools. \url{https://aave.com/docs/developers/liquidity-pool}}
 
-		\begin{appendices}
+        \section{Appendix}\label{sec:appendix}
+
+        \begin{appendices}
 
             \begin{lstlisting}[style=solidity,caption={smart contract},label={lst:inheritance-protocol-code}]
 
@@ -518,8 +528,9 @@
 				}
 			\end{lstlisting}
 
-	\section{References}
-	\printbibliography
+	\section{References}\label{sec:references}
+            \printbibliography
+
 \end{appendices}
 
 \end{document}

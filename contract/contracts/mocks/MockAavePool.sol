@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./MockUSDC.sol";  // Add this import (adjust path if needed)
+import "./MockUSDC.sol";
 
 /**
  * Mock of aave pool. Follows this documentation:

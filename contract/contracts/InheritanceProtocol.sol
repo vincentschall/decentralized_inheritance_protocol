@@ -311,8 +311,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         uint256 count = getActiveCount();
         Beneficiary[] memory activeBeneficiaries = getActiveBeneficiaries();
         uint256 balanceRemainingInPool = aavePool.getBalance(address(this));
-        uint256 withdrawnAmount = aavePool.withdraw(address(usdc), balanceRemainingInPool, address(this));
-        uint256 originalBalance = withdrawnAmount;
+        uint256 originalBalance = aavePool.withdraw(address(usdc), balanceRemainingInPool, address(this));
         for (uint256 i=0; i<count; i++) {
             Beneficiary memory beneficiary = activeBeneficiaries[i];
             uint256 amount = beneficiary.amount;
