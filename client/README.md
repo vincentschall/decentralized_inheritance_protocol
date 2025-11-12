@@ -5,6 +5,7 @@
 ```bash
 cd client
 npm install
+mkdir public
 ```
 
 ## Running the Application
