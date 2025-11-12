@@ -11,55 +11,76 @@
 \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
 \addbibresource{refs.bib}
 \usepackage{listings}
-\lstdefinestyle{soliditystyle}{
-	backgroundcolor=\color{backcolour},
-	commentstyle=\color{codegreen},
-	keywordstyle=\color{blue},
-	numberstyle=\tiny\color{codegray},
-	stringstyle=\color{codepurple},
-	basicstyle=\ttfamily\footnotesize,
-	breakatwhitespace=false,
-	breaklines=true,
-	captionpos=b,
-	keepspaces=true,
-	numbers=left,
-	numbersep=5pt,
-	showspaces=false,
-	showstringspaces=false,
-	showtabs=false,
-	tabsize=2,
-	frame=single,
-	morekeywords={contract,function,public,private,external,internal,view,pure,returns,return,
-	address,uint256,uint,int256,int,bool,bytes,string,mapping,struct,enum,
-	modifier,event,require,assert,revert,if,else,for,while,constructor,
-	indexed,emit,payable,memory,storage,calldata,immutable}
-	}
-	\usepackage{courier}
-	\lstset{
-		basicstyle=\footnotesize\ttfamily,
-		breaklines=true,
-		backgroundcolor=\color{gray!5},
-		frame=single,
-		numbers=left,
-		numberstyle=\tiny\color{gray},
-		keywordstyle=\color{blue},
-		commentstyle=\color{gray!70}\itshape,
-		stringstyle=\color{teal},
-		showstringspaces=false,
-		tabsize=2,
-		columns=flexible,
-		keepspaces=true
-		}
 
-		\title{Report: Decentralized Inheritance Protocol}
-		\author{Noah Klaholz, Vincent Schall, Max Mendes Carvalho }
-		\date{November 2025}
 
-		\usepackage[toc,page]{appendix}
-		\usepackage{sectsty}
-		\allsectionsfont{\sffamily}
+% Define custom colors
+\definecolor{soliditybg}{HTML}{F9F9F9}
+\definecolor{soliditykeyword}{HTML}{005CC5}
+\definecolor{soliditystring}{HTML}{032F62}
+\definecolor{soliditycomment}{HTML}{6A737D}
+\definecolor{soliditytype}{HTML}{22863A}
+\definecolor{soliditynumber}{HTML}{B31D28}
 
-		\begin{document}
+% Solidity language definition
+\lstdefinelanguage{Solidity}{
+    keywords={
+        pragma, solidity, contract, library, interface, is, struct, enum,
+        function, modifier, event, constructor, fallback, receive, returns,
+        if, else, for, while, do, continue, break, return, emit, revert,
+        require, assert, mapping, storage, memory, calldata, public, private,
+        internal, external, pure, view, payable, virtual, override, immutable,
+        constant, delete, new, try, catch, assembly, return
+    },
+    keywordstyle=\color{soliditykeyword}\bfseries,
+    ndkeywords={
+        uint, uint8, uint16, uint32, uint64, uint128, uint256,
+        int, int8, int16, int32, int64, int128, int256,
+        address, bool, string, bytes, bytes1, bytes32, mapping, var
+    },
+    ndkeywordstyle=\color{soliditytype}\bfseries,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{soliditycomment}\ttfamily,
+    stringstyle=\color{soliditystring},
+    morestring=[b]',
+    morestring=[b]",
+    sensitive=true
+}
+
+% Solidity style
+\lstdefinestyle{solidity}{
+    language=Solidity,
+    backgroundcolor=\color{soliditybg},
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    tabsize=2,
+    showspaces=false,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    captionpos=b,
+    frame=single,
+    rulecolor=\color{gray!40},
+    frameround=tttt,
+    keywordstyle=\color{soliditykeyword}\bfseries,
+    ndkeywordstyle=\color{soliditytype}\bfseries,
+    commentstyle=\color{soliditycomment}\itshape,
+    stringstyle=\color{soliditystring},
+}
+
+
+\title{Report: Decentralized Inheritance Protocol}
+\author{Noah Klaholz, Vincent Schall, Max Mendes Carvalho }
+\date{November 2025}
+
+\usepackage[toc,page]{appendix}
+\usepackage{sectsty}
+\allsectionsfont{\sffamily}
+
+\begin{document}
 
 		\maketitle
 		\tableofcontents
@@ -76,7 +97,7 @@
 
 		\begin{appendices}
 
-			\begin{lstlisting}[language=soliditystyle,caption={smart contract}]
+            \begin{lstlisting}[style=solidity,caption={smart contract},label={lst:inheritance-protocol-code}]
 
 			// SPDX-License-Identifier: MIT
 			pragma solidity ^0.8.28;
@@ -497,8 +518,8 @@
 				}
 			\end{lstlisting}
 
-			\section{References}
-			\printbibliography
-		\end{appendices}
+	\section{References}
+	\printbibliography
+\end{appendices}
 
-	\end{document}
+\end{document}
