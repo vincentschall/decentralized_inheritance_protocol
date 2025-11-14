@@ -142,7 +142,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         return _currentState;
     }
 
-
     /**
      * Changes the state of the contract to a given state.
      * @param to the state to change to.
@@ -164,7 +163,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     }
 
     /// ---------- BENEFICIARY HANDLING ----------
-
 
     /**
      * Finds the index of a beneficiary in the beneficiaries list.
@@ -244,8 +242,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         emit BeneficiaryAdded(_address, _amount, emptyIndex);
         return true;
     }
-
-
 
     /// ---------- BALANCE HANDLING ----------
 
