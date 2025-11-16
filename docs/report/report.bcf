@@ -2362,22 +2362,38 @@
   </bcf:bibdata>
   <bcf:section number="0">
     <bcf:citekey order="1" intorder="1">Bidget2025</bcf:citekey>
-    <bcf:citekey order="2" intorder="1">openzeppelin-contracts</bcf:citekey>
-    <bcf:citekey order="3" intorder="1">eip-20</bcf:citekey>
-    <bcf:citekey order="4" intorder="1">openzeppelin-contracts</bcf:citekey>
-    <bcf:citekey order="5" intorder="1">openzeppelin-contracts</bcf:citekey>
-    <bcf:citekey order="5" intorder="2">swc-107</bcf:citekey>
-    <bcf:citekey order="6" intorder="1">eip-20</bcf:citekey>
-    <bcf:citekey order="6" intorder="2">aave-v3-pool</bcf:citekey>
-    <bcf:citekey order="7" intorder="1">eip-2612</bcf:citekey>
-    <bcf:citekey order="8" intorder="1">chainlink-automation</bcf:citekey>
-    <bcf:citekey order="9" intorder="1">solidity-docs</bcf:citekey>
-    <bcf:citekey order="9" intorder="2">openzeppelin-contracts</bcf:citekey>
-    <bcf:citekey order="10" intorder="1">swc-107</bcf:citekey>
-    <bcf:citekey order="11" intorder="1">solidity-docs</bcf:citekey>
-    <bcf:citekey order="12" intorder="1">eip-2612</bcf:citekey>
-    <bcf:citekey order="13" intorder="1">chainlink-automation</bcf:citekey>
-    <bcf:citekey order="14" intorder="1">eip-2612</bcf:citekey>
+    <bcf:citekey order="2" intorder="1">solidity-docs</bcf:citekey>
+    <bcf:citekey order="3" intorder="1">typescript-docs</bcf:citekey>
+    <bcf:citekey order="4" intorder="1">hardhat-docs</bcf:citekey>
+    <bcf:citekey order="5" intorder="1">hardhat-ignition</bcf:citekey>
+    <bcf:citekey order="6" intorder="1">openzeppelin-contracts</bcf:citekey>
+    <bcf:citekey order="7" intorder="1">mocha-docs</bcf:citekey>
+    <bcf:citekey order="7" intorder="2">chai-docs</bcf:citekey>
+    <bcf:citekey order="8" intorder="1">ethers-docs</bcf:citekey>
+    <bcf:citekey order="9" intorder="1">nextjs-docs</bcf:citekey>
+    <bcf:citekey order="10" intorder="1">react-docs</bcf:citekey>
+    <bcf:citekey order="11" intorder="1">tailwind-docs</bcf:citekey>
+    <bcf:citekey order="12" intorder="1">postcss-docs</bcf:citekey>
+    <bcf:citekey order="12" intorder="2">autoprefixer-docs</bcf:citekey>
+    <bcf:citekey order="13" intorder="1">lucide-docs</bcf:citekey>
+    <bcf:citekey order="14" intorder="1">web3modal-docs</bcf:citekey>
+    <bcf:citekey order="15" intorder="1">eslint-docs</bcf:citekey>
+    <bcf:citekey order="16" intorder="1">nodejs-docs</bcf:citekey>
+    <bcf:citekey order="17" intorder="1">openzeppelin-contracts</bcf:citekey>
+    <bcf:citekey order="18" intorder="1">eip-20</bcf:citekey>
+    <bcf:citekey order="19" intorder="1">openzeppelin-contracts</bcf:citekey>
+    <bcf:citekey order="20" intorder="1">quicknode</bcf:citekey>
+    <bcf:citekey order="21" intorder="1">eip-20</bcf:citekey>
+    <bcf:citekey order="21" intorder="2">aave-v3-pool</bcf:citekey>
+    <bcf:citekey order="22" intorder="1">chainlink-automation</bcf:citekey>
+    <bcf:citekey order="23" intorder="1">solidity-docs</bcf:citekey>
+    <bcf:citekey order="23" intorder="2">openzeppelin-contracts</bcf:citekey>
+    <bcf:citekey order="24" intorder="1">quicknode</bcf:citekey>
+    <bcf:citekey order="25" intorder="1">solidity-docs</bcf:citekey>
+    <bcf:citekey order="26" intorder="1">geeks-dynamic-array</bcf:citekey>
+    <bcf:citekey order="27" intorder="1">chainlink-automation</bcf:citekey>
+    <bcf:citekey order="28" intorder="1">eip-2612</bcf:citekey>
+    <bcf:citekey order="29" intorder="1">project-repo</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nyt">

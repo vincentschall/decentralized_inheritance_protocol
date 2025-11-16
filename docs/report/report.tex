@@ -111,7 +111,71 @@
 
     \section{Tool usage / tech stack}\label{sec:tech-stack}
 
+    This project spans two domains: on-chain smart contract development and an off-chain web client for interaction.
 
+    \subsection{Core Languages}\label{subsec:core-languages}
+    \textbf{Solidity} (v0.8.28) is used for smart contract logic, leveraging built-in overflow checks and modern language features \parencite{solidity-docs}.
+    \textbf{TypeScript} is used across both the contract testing layer and the frontend for static typing and improved tooling \parencite{typescript-docs}.
+
+    \subsection{Smart Contract Framework and Tooling}\label{subsec:smart-contract-framework-and-tooling}
+    \textbf{Hardhat} serves as the primary development and testing framework \parencite{hardhat-docs}.
+    It provides a local Ethereum network, deterministic deployments, stack traces, and plugin extensibility.
+    Scripts like \texttt{scripts/deploy.js} and \texttt{scripts/auto-deploy.js} automate contract deployment, while \texttt{start.js} boots a local node and performs an initial deployment for the frontend to consume.
+
+    \textbf{Hardhat Ignition} is adopted for more declarative deployment pipelines \parencite{hardhat-ignition}.
+    Ignition modules (e.g., in \texttt{ignition/modules/}) describe deployment intent, helping reduce manual sequencing errors and making deployments reproducible.
+
+    \textbf{OpenZeppelin Contracts} supplies audited base contracts (\texttt{Ownable}, \texttt{ReentrancyGuard}, \texttt{IERC20}) to reduce implementation risk and accelerate development \parencite{openzeppelin-contracts}.
+    Using well-established libraries mitigates common vulnerabilities and increases readability for reviewers.
+
+    \subsection{Testing Stack}\label{subsec:testing-stack}
+    Unit and integration tests use \textbf{Mocha} as the test runner and \textbf{Chai} with the \texttt{chai-as-promised} pattern for expressive assertions \parencite{mocha-docs,chai-docs}.
+    \textbf{Hardhat Network Helpers} assist with time skips to keep tests isolated and deterministic.
+    The testing approach validates critical flows: beneficiary management, state machine transitions, death oracle integration, and payout distribution.
+
+    \subsection{Blockchain Interaction Library}\label{subsec:blockchain-interaction-library}
+    \textbf{Ethers.js} (v6) is used both in tests and the frontend for provider abstraction, contract bindings, and wallet interaction \parencite{ethers-docs}.
+    It offers a concise API, rich TypeScript definitions, and strong support for modern Ethereum features (signing, ENS, event queries).
+
+    \subsection{Frontend Framework and UI Stack}\label{subsec:frontend-framework-and-ui-stack}
+    The web client is built with \textbf{Next.js} (v15) \parencite{nextjs-docs} for file-based routing, server-side rendering (SSR), and asset optimization.
+    \textbf{React 18} provides the component model and concurrent rendering features \parencite{react-docs}.
+    \textbf{Tailwind CSS} supplies utility-first styling for rapid UI iteration and consistent spacing/color scales \parencite{tailwind-docs}.
+    Post-processing is handled by \textbf{PostCSS} and \textbf{Autoprefixer} to normalize styles across browsers \parencite{postcss-docs,autoprefixer-docs}.
+    Icons come from \textbf{Lucide React} for a lightweight, customizable icon set \parencite{lucide-docs}.
+
+    \subsection{Wallet and Web3 UX}\label{subsec:wallet-and-web3-ux}
+    \textbf{Web3Modal} simplifies multi-wallet connection flows on the frontend, abstracting provider selection and improving user onboarding \parencite{web3modal-docs}.
+    This reduces friction versus building custom wallet connectors manually, while maintaining extensibility for future wallet providers.
+
+    \subsection{Linting and Code Quality}\label{subsec:linting-and-code-quality}
+    \textbf{ESLint} with the Next.js configuration enforces consistent style and catches common mistakes in the React/TypeScript codebase \parencite{eslint-docs}.
+    Static analysis complements TypeScript's type checking by addressing stylistic and best-practice concerns (unused variables, unsafe React patterns).
+    For Solidity, reliance on established OpenZeppelin components and compiler warnings keeps the contract surface maintainable; future work could add a dedicated static analysis pass (e.g., Slither) to further enhance assurance.
+
+    \subsection{Runtime and Scripting}\label{subsec:runtime-and-scripting}
+    \textbf{Node.js} underpins Hardhat scripts, local tooling, and the custom automation scripts (\texttt{start.js}, \texttt{cleanup.js}) \parencite{nodejs-docs}.
+    These scripts orchestrate development workflow: spinning up a local chain, deploying contracts, and cleaning artifacts to reset state between test sessions.
+
+    \subsection{Design Rationale}\label{subsec:design-rationale}
+    The chosen stack prioritizes:
+    \begin{itemize}
+        \item \textbf{Auditability}: Using audited libraries (OpenZeppelin) and type-safe code (TypeScript) reduces risk.
+        \item \textbf{Developer Velocity}: Hardhat + Next.js + Tailwind enable iterative development with fast feedback loops.
+        \item \textbf{Maintainability}: Consistent tooling (Ethers.js across backend/frontend) minimizes integration complexity.
+        \item \textbf{Extensibility}: Ignition and modular deployment scripts allow easy evolution (multi-asset support, new oracles).
+        \item \textbf{User Experience}: Web3Modal and Tailwind produce a smoother interaction surface for non-technical beneficiaries.
+    \end{itemize}
+
+    \subsection{Integration Flow}\label{subsec:integration-flow}
+    The typical local flow is:
+    \begin{enumerate}
+        \item Run \texttt{node start.js} to launch a Hardhat node and automatically deploy contracts (via Ignition or scripts).
+        \item The deployment script writes a \texttt{deployment-info.json} artifact consumed by the frontend for contract addresses and ABI metadata.
+        \item Frontend connects to the local network through Ethers.js and Web3Modal, pulling contract state (beneficiaries, balances, state machine phase).
+        \item Mocha/Chai test suite validates contract invariants in isolation; manual UI interactions can then be performed to cross-check behavior.
+        \item \texttt{cleanup.js} purges artifacts and resets caches when a fresh environment is needed.
+    \end{enumerate}
 
     \section{Smart Contract architecture}\label{sec:smart-contract-architecture}
 
@@ -211,7 +275,9 @@
         \item \textbf{UX improvements}: support for EIP\nobreakdash-2612 \texttt{permit} and richer events to make indexing easier \parencite{eip-2612}.
     \end{itemize}
 
-    \section{Decisions} //TODO rename this, but should be about why we did certain things, why abandon vesting for example etc.
+    \section{Decision Making}\label{sec:decision-making}
+
+
 
     \section{Appendix}\label{sec:appendix}
 
@@ -649,6 +715,9 @@
         \end{lstlisting}
 
         \section{References}\label{sec:references}
+
+        The entire project can be found at the \parencite{project-repo} at https://github.com/vincentschall/decentralized\_inheritance\_protocol.
+
         \printbibliography
 
     \end{appendices}
