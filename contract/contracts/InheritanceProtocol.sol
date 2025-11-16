@@ -312,7 +312,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
      * Distributes the payout based on definitions given by owner.
      * Is only called in the updateState() Function, after death verification
      */
-    function distributePayout() public {
+    function distributePayout() private onlyDistribution nonReentrant{
         require(!_called, "Payout can only be called once.");
         _called = true;
         bool donation = !isPayoutFullyDetermined();
