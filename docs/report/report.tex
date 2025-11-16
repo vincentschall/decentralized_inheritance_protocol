@@ -109,11 +109,109 @@
     In case of death, trusted oracles (in most cases a notary) are used to verify the death via death certificates, before initiating the payout.
     \footnotetext{Aave — a decentralized lending protocol: supply crypto to earn interest via liquidity pools. \url{https://aave.com/docs/developers/liquidity-pool}}
 
+    \section{Tool usage / tech stack}\label{sec:tech-stack}
+
+
+
     \section{Smart Contract architecture}\label{sec:smart-contract-architecture}
 
-    \section{Decisions} //TODO rename this, but should be about why we did certain things, why abandon vesting for example etc.
+    \subsection{General Design and Flow}\label{subsec:design-and-flow}
+    The inheritance protocol is implemented in a single smart contract and composes well-known primitives from \textit{OpenZeppelin} for access control and safety \parencite{openzeppelin-contracts}.
+    In particular, the contract inherits from \texttt{Ownable} to grant the will's creator administrative privileges, uses \texttt{ReentrancyGuard} to protect sensitive functions, and interacts with funds through the \texttt{IERC20} interface of the ERC\nobreakdash-20 standard \parencite{eip-20}.
+    For external integration, the contract talks to a lending pool (Aave-compatible mock) to invest idle balances and to a death oracle for verification.
 
-    \section{Tool usage / tech stack}
+    The constructor wires all dependencies (token, death oracle, notary, pool) and initializes the state machine that models the life cycle of a will.
+    The state machine transitions among four phases:
+
+    \begin{lstlisting}[style=solidity,caption={Contract state machine},label={lst:state-machine}]
+    enum State { ACTIVE, WARNING, VERIFICATION, DISTRIBUTION }
+    \end{lstlisting}
+
+    \textit{ACTIVE} is the normal operating phase where the owner can manage beneficiaries and funds.
+    If the owner misses a check-in for more than 90 days, the state moves to \textit{WARNING}.
+    After a 30-day grace period without check-in, the state advances to \textit{VERIFICATION}.
+    Once the death oracle confirms the owner's passing, the state becomes \textit{DISTRIBUTION}, which triggers payout.
+
+    The \texttt{updateState()} function is public so that the notary, family members, or any third party can progress the state machine when the objective conditions are met.
+    This creates an incentive-aligned mechanism: beneficiaries want the state to be up to date to receive their funds and a trusted notary can be instructed to call this function regularly.
+    When the state reaches \textit{DISTRIBUTION}, the contract immediately invokes \texttt{distributePayout()} and emits a \texttt{StateChanged} event.
+
+    \subsection{Roles and Access Control}\label{subsec:roles}
+    We use \texttt{Ownable} for a single privileged owner (the testator), and a dedicated \emph{notary} address for external verification tasks \parencite{openzeppelin-contracts}.
+    Access is enforced by modifiers:
+    \begin{itemize}
+        \item \texttt{onlyOwner}: administrative actions (check-in, adding/removing beneficiaries, deposits/withdrawals) are restricted to the owner.
+        \item \texttt{onlyNotary}: only the notary can upload death verification proofs.
+        \item \texttt{onlyPreDistribution}: prevents fund mutations once the system is in the distribution phase.
+        \item \texttt{onlyDistribution}: guards payout functions so they are callable only in the final phase.
+        \item \texttt{onlyActiveWarning}: Prevents Administrative changes like adding beneficiaries from being executed unless in the ACTIVE or WARNING phase.
+    \end{itemize}
+    Functions that transfer value also use the \texttt{nonReentrant} modifier from \texttt{ReentrancyGuard} to mitigate reentrancy (SWC-107) \parencite{quicknode}.
+
+    \subsection{Beneficiaries and Payout Logic}\label{subsec:beneficiaries}
+    Beneficiaries are kept in a fixed-size array of at most ten entries to keep gas costs predictable and iteration bounded.
+    Each entry stores a payout address and a percentage amount.
+    The contract enforces that:
+    \begin{itemize}
+        \item No duplicate beneficiary addresses exist.
+        \item The total determined payout never exceeds 100\%.
+        \item Add/remove operations are only allowed before distribution and require a fresh owner check-in.
+        \item All administrative changes can only be made by the contract's owner.
+    \end{itemize}
+    On distribution, the contract retrieves the pool balance from Aave, computes each beneficiary's share by percentage, and transfers tokens accordingly by iterating through the list of beneficiaries.
+    If the sum of percentages is below 100\%, the residual is sent to a donation address to prevent funds from being stranded forever.
+
+    \subsection{Funds Management and Aave Integration}\label{subsec:funds}
+    The protocol accepts an ERC\nobreakdash-20 token (MockUSDC in our deployment) via \texttt{deposit}.
+    The owner first approves the contract to spend tokens, then the contract supplies tokens into an Aave-compatible pool (MockAavePool in our deployment) to accrue yield \parencite{eip-20,aave-v3-pool}.
+    Withdrawals reverse the flow: tokens are pulled from the pool and transferred back to the owner.
+    Critical operations are protected with \texttt{nonReentrant} and disallowed after distribution.
+
+    \subsection{Death Verification and Oracles}\label{subsec:oracles}
+    Death verification is abstracted behind the \texttt{IDeathOracle} interface.
+    The notary calls \texttt{uploadDeathVerification} with a boolean and proof bytes; the oracle persists the attestation and can still be called upon by beneficiaries to verify the death.
+    The state machine polls the oracle by calling \texttt{isDeceased(owner())} and, if true, transitions to \textit{DISTRIBUTION}.
+    In our test setup we use a mock oracle to enable deterministic unit tests.
+    For a production deployment, this component could be backed by a notarized registry, a government API gateway, or decentralized oracle networks.
+    Additionally, \texttt{updateState()} could be automated using off-chain keepers (e.g., Chainlink Automation) to guarantee timely transitions without relying on manual calls \parencite{chainlink-automation}.
+    However, since beneficiaries already have an incentive to update the state regularly, the decision was made to avoid the extra cost for off-chain automation.
+
+    \subsection{Security Considerations}\label{subsec:security}
+    Our design follows standard Solidity best practices \parencite{solidity-docs,openzeppelin-contracts}:
+    \begin{itemize}
+        \item Reentrancy protection on functions that transfer tokens \parencite{quicknode}.
+        \item Access control via explicit roles and clear phase guards (\texttt{onlyPreDistribution}, \texttt{onlyDistribution}, \dots).
+        \item Use of \texttt{immutable} and \texttt{constant} for critical configuration to reduce runtime risk and gas cost.
+        \item Bounded iteration over at most ten beneficiaries to avoid unbounded gas usage.
+        \item Overflow/underflow safety from the Solidity 0.8.x checked arithmetic \parencite{solidity-docs}.
+    \end{itemize}
+    Threats and mitigations:
+    \begin{itemize}
+        \item \textbf{Oracle risk}: a compromised notary/oracle could wrongfully trigger distribution.
+        This is mitigated organizationally (trusted notaries) and could be strengthened with multi-sig attestations or time delays.
+        \item \textbf{Griefing/liveness}: anyone can call \texttt{updateState()}, but transitions are conditional and idempotent; no value is at risk.
+        \item \textbf{External calls}: interactions with the pool and token are performed after state updates and protected by \texttt{nonReentrant}.
+        The donation transfer happens last to simplify reasoning.
+    \end{itemize}
+
+    \subsection{Gas and Scalability}\label{subsec:gas}
+    The fixed-size array avoids storage resizes and bounds loops to a maximum of ten iterations.
+    Getter functions such as \texttt{getActiveBeneficiaries()} build a compact memory array for off-chain consumers, trading a small amount of gas for simpler client logic.
+    State checks in \texttt{updateState()} are in constant time.
+    While the design targets personal wills (low on-chain scale), it remains economical for typical usage.
+
+    \subsection{Known Limitations and Future Work}\label{subsec:limitations}
+    \begin{itemize}
+        \item \textbf{Single-asset support}: the current implementation handles one ERC\nobreakdash-20 token instance.
+        Extending to multiple assets would require per-asset accounting and distribution.
+        \item \textbf{Maximum of ten beneficiaries}: chosen for simplicity and predictable gas; a dynamic structure\parencite{geeks-dynamic-array} could be introduced.
+        However this would require careful consideration of gas efficiency and time complexity, while larger will structures could also be realized by having multiple wills and distributing funds accordingly.
+        \item \textbf{Oracle centralization}: production setups should consider decentralized attestations or multi-party notaries.
+        \item \textbf{Automation}: integrating keepers would remove the need for manual \texttt{updateState()} calls \parencite{chainlink-automation}.
+        \item \textbf{UX improvements}: support for EIP\nobreakdash-2612 \texttt{permit} and richer events to make indexing easier \parencite{eip-2612}.
+    \end{itemize}
+
+    \section{Decisions} //TODO rename this, but should be about why we did certain things, why abandon vesting for example etc.
 
     \section{Appendix}\label{sec:appendix}
 
