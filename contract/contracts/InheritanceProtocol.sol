@@ -11,9 +11,10 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
 
     IERC20 public immutable usdc;
     IDeathOracle public immutable deathOracle;
-    address private notaryAddress;
     MockAavePool public aavePool;
 
+    // address for notary / person who may verify the death
+    address private notaryAddress;
     // address for donations (underdetermined payout)
     address private ourAddress;
 
@@ -126,6 +127,11 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
             _currentState = State.WARNING;
         }
 
+        // If in WARNING and checkIn happened → ACTIVE
+        if (_currentState == State.WARNING && elapsed < CHECK_IN_PERIOD) {
+            _currentState = State.ACTIVE;
+        }
+
         // If in WARNING and grace period expired → VERIFICATION
         if (_currentState == State.WARNING && elapsed > CHECK_IN_PERIOD + GRACE_PERIOD) {
             _currentState = State.VERIFICATION;
@@ -164,6 +170,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         require(_currentState == State.ACTIVE || _currentState == State.WARNING, "Need to be in active or warning state");
         emit CheckedIn(block.timestamp);
         _lastCheckIn = block.timestamp;
+        updateState();
     }
 
     /// ---------- BENEFICIARY HANDLING ----------

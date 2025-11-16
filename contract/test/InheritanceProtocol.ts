@@ -697,6 +697,18 @@ describe("Inheritance Protocol", function () {
                 expect(await inheritanceProtocol.getState()).to.equal(1); // WARNING
             });
 
+            it("WARNING → ACTIVE after check-in", async function () {
+                // Move to WARNING
+                await connectedEthers.provider.send("evm_increaseTime", [Number(90n * DAY + 2n)]);
+                await connectedEthers.provider.send("evm_mine", []);
+                await inheritanceProtocol.updateState();
+                expect(await inheritanceProtocol.getState()).to.equal(1);
+
+                await inheritanceProtocol.checkIn();
+
+                expect(await inheritanceProtocol.getState()).to.equal(0); // ACTIVE
+            });
+
             it("WARNING → VERIFICATION after > 120 days total", async function () {
                 // Move to WARNING
                 await connectedEthers.provider.send("evm_increaseTime", [Number(90n * DAY + 2n)]);
