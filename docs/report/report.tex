@@ -104,9 +104,10 @@
     This allows the balance to grow instead of laying dry.\newline
     The owner has to check in at least every 90 days to verify that he's still alive.
     As long as these check-ins occur, there will be no payout.
-    When a check in is missed there is a 30-day grace period during which a check in can be made again \textcolor{red}{TODO}
+    When a check-in is missed, there is a 30-day grace period during which a check-in can still be made to reset the timer.
+    If no check-in occurs within this grace period, the contract enters a verification phase where a trusted notary can upload death verification.
 
-    In case of death, trusted oracles (in most cases a notary) are used to verify the death via death certificates, before initiating the payout.
+    In case of death, trusted oracles (in most cases a notary) are used to verify the death via death certificates before initiating the payout.
     \footnotetext{Aave — a decentralized lending protocol: supply crypto to earn interest via liquidity pools. \url{https://aave.com/docs/developers/liquidity-pool}}
 
     \section{Tool usage / tech stack}\label{sec:tech-stack}
@@ -275,11 +276,105 @@
         \item \textbf{UX improvements}: support for EIP\nobreakdash-2612 \texttt{permit} and richer events to make indexing easier \parencite{eip-2612}.
     \end{itemize}
 
-    \section{Decision Making}\label{sec:decision-making}
+    \section{Design Decisions and Scope Refinement}\label{sec:decisions}
 
+    The initial project proposal outlined an ambitious feature set including vesting schedules, age-gated releases, multi-asset support, and automated state transitions.
+    During development, we refined the scope based on technical feasibility, cost-benefit analysis, and project timeline constraints.
+    This section documents the key decisions and trade-offs.
 
+    \subsection{Removal of Vesting Schedules}\label{subsec:vesting-decision}
+    The original design included sophisticated vesting mechanisms to distribute inheritances gradually over time (e.g., 10\% per year for 10 years) to prevent sudden wealth syndrome and protect young beneficiaries from mismanaging lump sums.
+    However, we ultimately removed vesting from the final implementation.
 
-    \section{Appendix}\label{sec:appendix}
+    \paragraph{Technical Challenge: Time-Based Execution.}
+    Smart contracts on Ethereum are fundamentally passive: they cannot self-execute based on time.
+    A vesting schedule requires periodic unlocking (e.g., monthly or yearly), but no on-chain primitive can trigger a function call at a future timestamp without external intervention.
+    This creates three potential solutions, each with significant drawbacks:
+
+    \begin{enumerate}
+        \item \textbf{Off-chain automation (Chainlink Keepers):} Use a keeper network to call \texttt{releaseVestedFunds()} at scheduled intervals \parencite{chainlink-automation}.
+        This introduces recurring costs (keeper fees), centralizes liveness assumptions (keeper availability), and adds complexity to the deployment and maintenance workflow.
+
+        \item \textbf{Pull-based vesting:} Beneficiaries call \texttt{withdraw()} whenever they want funds, and the contract calculates how much has vested since the last withdrawal.
+        While this eliminates automation costs, it creates poor UX (beneficiaries must remember to claim) and removes the protective aspect of enforced gradual distribution—beneficiaries can simply wait and withdraw the full amount later.
+
+        \item \textbf{Incentivized third-party calls:} Reward external actors for calling unlock functions by giving them a small fee.
+        This adds game-theoretic complexity, potential griefing vectors (claiming fees without benefiting beneficiaries), and still requires someone to monitor and trigger transactions.
+    \end{enumerate}
+
+    \paragraph{Scope Prioritization.}
+    Given a fixed development timeline, we chose to focus on the core inheritance mechanism (state machine, death verification, percentage-based distribution) rather than vesting.
+    The current design delivers immediate value for the primary use case—preventing total loss of crypto assets upon death—while vesting primarily addresses a secondary concern (beneficiary financial responsibility).
+    Future iterations could introduce optional vesting as a modular extension for users who specifically need it.
+
+    \paragraph{Alternative Mitigations.}
+    Users concerned about lump-sum distributions can approximate vesting by creating multiple inheritance contracts with staggered check-in periods or by allocating funds to custodial services that provide off-chain vesting.
+    Additionally, the protocol's percentage-based allocation allows splitting inheritances among trustees or financial advisors who can manage gradual distributions off-chain.
+
+    \subsection{Manual State Transitions Over Automated Keepers}\label{subsec:automation-decision}
+    The contract's state machine (\texttt{ACTIVE} $\rightarrow$ \texttt{WARNING} $\rightarrow$ \texttt{VERIFICATION} $\rightarrow$ \texttt{DISTRIBUTION}) relies on anyone calling \texttt{updateState()} to check conditions and advance phases.
+    We considered integrating Chainlink Automation to guarantee timely transitions but decided against it.
+
+    \paragraph{Cost vs. Benefit.}
+    Chainlink Automation charges per execution (currently \$0.10–\$1.00 depending on gas prices and network) \parencite{chainlink-automation}.
+    For a contract that might remain in \texttt{ACTIVE} state for years or decades, regular keeper pings would accumulate significant costs with no user benefit.
+    Even monthly checks over 10 years would cost \$12–\$120, and the contract would need to be pre-funded to cover these fees.
+
+    \paragraph{Incentive Alignment.}
+    Beneficiaries have a direct financial incentive to call \texttt{updateState()} after the owner's death: it is the only way to trigger distribution and receive their inheritance.
+    Similarly, the notary (often a trusted family member or legal professional) can be instructed to monitor the contract.
+    Since \texttt{updateState()} is public and gas costs are negligible compared to inheritance values, relying on interested parties is economically rational and removes recurring operational expenses.
+
+    \paragraph{Liveness Assumption.}
+    This design assumes at least one beneficiary or the notary will act when needed.
+    For high-value estates, this is a reasonable assumption.
+    Users requiring absolute automation (e.g., no living beneficiaries, all recipients are minors) could separately fund a keeper service, but we judged this edge case insufficient to justify baking automation costs into every deployment.
+
+    \subsection{Aave Integration for Yield Generation}\label{subsec:aave-decision}
+    Funds deposited into the inheritance contract are supplied to an Aave-compatible lending pool to earn yield while awaiting distribution \parencite{aave-v3-pool}.
+    This decision stems from several factors:
+
+    \paragraph{Capital Efficiency.}
+    Inheritance timelines are inherently long — assets might sit in the contract for years or decades.
+    Leaving funds idle represents a significant opportunity cost.
+    By supplying assets to Aave, the contract earns interest (typically 2–6\% APY on stablecoins like USDC), growing the inheritance value over time.
+    For a \$100,000 deposit earning 4\% over 10 years, this adds \$48.024 to the final distribution.
+
+    \paragraph{Security and Maturity.}
+    Aave V3 is one of the most battle-tested DeFi protocols, with over \$10 billion in total value locked and extensive security audits \parencite{aave-v3-pool}.
+    Its lending pools are non-custodial (the contract retains withdrawal rights) and have a strong track record.
+    Using a proven primitive reduces implementation risk compared to building a custom yield strategy.
+
+    \paragraph{Liquidity and Composability.}
+    Aave supplies remain liquid: the contract can withdraw funds at any time for owner withdrawals or final distribution.
+    This flexibility is critical—vesting or locked staking would prevent the owner from accessing their own funds.
+    Aave's \texttt{aToken} model (interest-bearing tokens) integrates cleanly with ERC-20 workflows.
+
+    \paragraph{Stablecoin Focus.}
+    The current implementation uses USDC (or a mock equivalent) to avoid volatility risk.
+    Yield on stablecoins is lower than on volatile assets but ensures predictable distributions.
+    Extending to ETH or other tokens would require additional risk disclosures and potentially dynamic allocation strategies, which we deferred to future work.
+
+    \subsection{Single Notary vs. Multi-Signature Verification}\label{subsec:notary-decision}
+    The original proposal mentioned 2-of-3 trusted contacts for death verification.
+    The implemented design uses a single notary address.
+    This simplification reduces contract complexity (no threshold signature logic) and reflects a pragmatic trust model: users select one highly trusted entity (e.g., a lawyer, family member, or professional executor service).
+    The notary's role is narrowly scoped to uploading death verification; they cannot withdraw funds or change beneficiaries, limiting abuse potential.
+    Future versions could introduce multi-sig verification via OpenZeppelin's \texttt{AccessControl} or a separate oracle aggregator for users requiring decentralized attestation.
+
+    \subsection{Scope Reductions and Future Work}\label{subsec:scope-reductions}
+    Several features from the initial proposal were deferred:
+
+    \subsection{Summary of Trade-offs}\label{subsec:tradeoffs-summary}
+    The implemented protocol represents a pragmatic subset of the initial vision, optimized for:
+    \begin{itemize}
+        \item \textbf{Core value delivery:} Solving the primary problem (crypto inheritance loss) without feature bloat.
+        \item \textbf{Gas efficiency:} Bounded operations, minimal storage, no recurring costs.
+        \item \textbf{Security surface:} Fewer features mean fewer attack vectors and simpler auditing.
+        \item \textbf{User autonomy:} No mandatory off-chain dependencies or subscription fees.
+    \end{itemize}
+    Future work can layer additional features (vesting, multi-asset, decentralized oracles) as optional modules or through a factory pattern that deploys specialized contract variants based on user needs.
+
 
     \begin{appendices}
 

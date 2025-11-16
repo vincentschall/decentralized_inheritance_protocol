@@ -2393,7 +2393,11 @@
     <bcf:citekey order="26" intorder="1">geeks-dynamic-array</bcf:citekey>
     <bcf:citekey order="27" intorder="1">chainlink-automation</bcf:citekey>
     <bcf:citekey order="28" intorder="1">eip-2612</bcf:citekey>
-    <bcf:citekey order="29" intorder="1">project-repo</bcf:citekey>
+    <bcf:citekey order="29" intorder="1">chainlink-automation</bcf:citekey>
+    <bcf:citekey order="30" intorder="1">chainlink-automation</bcf:citekey>
+    <bcf:citekey order="31" intorder="1">aave-v3-pool</bcf:citekey>
+    <bcf:citekey order="32" intorder="1">aave-v3-pool</bcf:citekey>
+    <bcf:citekey order="33" intorder="1">project-repo</bcf:citekey>
   </bcf:section>
   <!-- SORTING TEMPLATES -->
   <bcf:sortingtemplate name="nyt">
