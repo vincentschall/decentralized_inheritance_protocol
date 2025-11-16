@@ -5,11 +5,18 @@
 * [CONTRIBUTING](CONTRIBUTING.md)
 * [License](LICENSE.md)
 * [Description](description.txt)
+* [LatexREADME](docs/report/README.md)
+* [ClientREADME](client/README.md)
+
+## Scripts
+
+* [LatexBuild](docs/report/build.sh)
+* [Cleanup](cleanup.js)
+* [HardhatStart](start.js)
+
+For the client please refer to the [ClientREADME](client/README.md).
 
 ## Roadmap
-
-not definitive and not in-order.  
-
 
 ### Core Contract Features
 - **Beneficiary management logic**
