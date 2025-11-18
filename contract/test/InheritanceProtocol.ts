@@ -919,6 +919,7 @@ describe("Inheritance Protocol", function () {
             expect(await inheritanceProtocol.getState()).to.equal(3);
             expect(await mockUSDC.balanceOf(beneficiary1.address)).to.equal(b1Before + q1);
             expect(await mockUSDC.balanceOf(beneficiary2.address)).to.equal(b2Before + q2);
+            expect(await mockUSDC.balanceOf(notary.address)).to.equal(notBefore + q3);
         });
     });
 });

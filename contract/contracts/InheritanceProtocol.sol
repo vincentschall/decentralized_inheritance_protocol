@@ -319,7 +319,7 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
         }
         if (donation) {
             // Underdetermined payout: transfer remaining assets to notary.
-            uint256 donatedAmount = getBalance();
+            uint256 donatedAmount = usdc.balanceOf(address(this));
             usdc.transfer(notaryAddress, donatedAmount);
             emit PayoutMade(donatedAmount, notaryAddress);
         }
