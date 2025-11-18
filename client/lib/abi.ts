@@ -321,13 +321,6 @@ export const INHERITANCE_PROTOCOL_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "distributePayout",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
