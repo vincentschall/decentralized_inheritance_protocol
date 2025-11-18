@@ -153,16 +153,6 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     }
 
     /**
-     * Changes the state of the contract to a given state.
-     * @param to the state to change to.
-     */
-    function changeState (State to) public {
-        require(to != _currentState, "Already in requested state");
-        emit StateChanged(block.timestamp, _currentState, to);
-        _currentState = to;
-    }
-
-    /**
      * The owner checks in to verify that he's alive.
      * Should be possible in active and warning state.
      */

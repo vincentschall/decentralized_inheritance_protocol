@@ -792,96 +792,133 @@ describe("Inheritance Protocol", function () {
                 ).to.be.revertedWith("Cannot make administrative changes without Owner check-In");
             });
         });
+    });
 
+    // New test suite for Notary / death verification logic
+    describe("Notary and death verification", function () {
+        const DAY = 24n * 60n * 60n;
 
-        // New test suite for Notary / death verification logic
-        describe("Notary and death verification", function () {
-            const DAY = 24n * 60n * 60n;
+        // Ensure a clean contract for these tests (avoid deposits/beneficiaries from parent suite)
+        beforeEach(async function () {
+            const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
+            inheritanceProtocol = await InheritanceProtocolFactory.deploy(
+                await mockUSDC.getAddress(),
+                await mockDeathOracle.getAddress(),
+                notary.address,
+                await mockAavePool.getAddress()
+            );
+            await mockUSDC.connect(owner).approve(
+                await inheritanceProtocol.getAddress(),
+                2n ** 256n - 1n
+            );
+        });
 
-            // Ensure a clean contract for these tests (avoid deposits/beneficiaries from parent suite)
-            beforeEach(async function () {
-                const InheritanceProtocolFactory = await connectedEthers.getContractFactory("InheritanceProtocol");
-                inheritanceProtocol = await InheritanceProtocolFactory.deploy(
-                    await mockUSDC.getAddress(),
-                    await mockDeathOracle.getAddress(),
-                    notary.address,
-                    await mockAavePool.getAddress()
-                );
-                await mockUSDC.connect(owner).approve(
-                    await inheritanceProtocol.getAddress(),
-                    2n ** 256n - 1n
-                );
-            });
+        it("Only the notary can upload death verification", async function () {
+            const proof = "0x01";
+            // Owner cannot call
+            await expect(
+                (inheritanceProtocol as any).uploadDeathVerification(true, proof)
+            ).to.be.revertedWith("Only notary can call this function");
 
-            it("Only the notary can upload death verification", async function () {
-                const proof = "0x01";
-                // Owner cannot call
-                await expect(
-                    (inheritanceProtocol as any).uploadDeathVerification(true, proof)
-                ).to.be.revertedWith("Only notary can call this function");
+            // Random third party cannot call
+            await expect(
+                (inheritanceProtocol.connect(beneficiary1) as any).uploadDeathVerification(true, proof)
+            ).to.be.revertedWith("Only notary can call this function");
 
-                // Random third party cannot call
-                await expect(
-                    (inheritanceProtocol.connect(beneficiary1) as any).uploadDeathVerification(true, proof)
-                ).to.be.revertedWith("Only notary can call this function");
+            // Notary can call and it updates the oracle for the owner
+            const tx = await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(true, proof);
+            await expect(tx).to.emit(mockDeathOracle, "DeathRecorded");
 
-                // Notary can call and it updates the oracle for the owner
-                const tx = await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(true, proof);
-                await expect(tx).to.emit(mockDeathOracle, "DeathRecorded");
+            expect(await mockDeathOracle.isDeceased(owner.address)).to.equal(true);
+            expect(await inheritanceProtocol.checkIfOwnerDied()).to.equal(true);
+        });
 
-                expect(await mockDeathOracle.isDeceased(owner.address)).to.equal(true);
-                expect(await inheritanceProtocol.checkIfOwnerDied()).to.equal(true);
-            });
+        it("Accepts empty proof and remains in VERIFICATION if deceased=false", async function () {
+            // Move to VERIFICATION first
+            await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 1n)]);
+            await connectedEthers.provider.send("evm_mine", []);
+            await inheritanceProtocol.updateState();
+            expect(await inheritanceProtocol.getState()).to.equal(2); // VERIFICATION
 
-            it("Accepts empty proof and remains in VERIFICATION if deceased=false", async function () {
-                // Move to VERIFICATION first
-                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 1n)]);
-                await connectedEthers.provider.send("evm_mine", []);
-                await inheritanceProtocol.updateState();
-                expect(await inheritanceProtocol.getState()).to.equal(2); // VERIFICATION
+            // Notary says not deceased with empty proof
+            await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(false, "0x");
+            await inheritanceProtocol.updateState();
+            expect(await inheritanceProtocol.getState()).to.equal(2); // stays VERIFICATION
+        });
 
-                // Notary says not deceased with empty proof
-                await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(false, "0x");
-                await inheritanceProtocol.updateState();
-                expect(await inheritanceProtocol.getState()).to.equal(2); // stays VERIFICATION
-            });
+        it("End-to-end: notary upload triggers distribution once time has elapsed", async function () {
+            const deposit = 2_000n * 10n ** 6n;
+            // Prepare funds and beneficiaries
+            await mockUSDC.mint(owner.address, deposit);
+            await mockUSDC.connect(owner).approve(await inheritanceProtocol.getAddress(), deposit);
+            await inheritanceProtocol.deposit(deposit);
+            await inheritanceProtocol.addBeneficiary(beneficiary1.address, 25n);
+            await inheritanceProtocol.addBeneficiary(beneficiary2.address, 75n);
 
-            it("End-to-end: notary upload triggers distribution once time has elapsed", async function () {
-                const deposit = 2_000n * 10n ** 6n;
-                // Prepare funds and beneficiaries
-                await mockUSDC.mint(owner.address, deposit);
-                await mockUSDC.connect(owner).approve(await inheritanceProtocol.getAddress(), deposit);
-                await inheritanceProtocol.deposit(deposit);
-                await inheritanceProtocol.addBeneficiary(beneficiary1.address, 25n);
-                await inheritanceProtocol.addBeneficiary(beneficiary2.address, 75n);
+            const b1Before = await mockUSDC.balanceOf(beneficiary1.address);
+            const b2Before = await mockUSDC.balanceOf(beneficiary2.address);
 
-                const b1Before = await mockUSDC.balanceOf(beneficiary1.address);
-                const b2Before = await mockUSDC.balanceOf(beneficiary2.address);
+            // Time travel to VERIFICATION
+            await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 3n)]);
+            await connectedEthers.provider.send("evm_mine", []);
+            await inheritanceProtocol.updateState();
+            expect(await inheritanceProtocol.getState()).to.equal(2);
 
-                // Time travel to VERIFICATION
-                await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 3n)]);
-                await connectedEthers.provider.send("evm_mine", []);
-                await inheritanceProtocol.updateState();
-                expect(await inheritanceProtocol.getState()).to.equal(2);
+            // Notary uploads death verification
+            await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(true, "0xdead");
 
-                // Notary uploads death verification
-                await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(true, "0xdead");
+            // One more update should payout
+            const tx = await inheritanceProtocol.updateState();
 
-                // One more update should payout
-                const tx = await inheritanceProtocol.updateState();
+            const fullDepositYield = (deposit * YIELD_FACTOR) / YIELD_DENOM;
+            const q1 = (fullDepositYield * 25n) / 100n;
+            const q2 = (fullDepositYield * 75n) / 100n;
 
-                const fullDepositYield = (deposit * YIELD_FACTOR) / YIELD_DENOM;
-                const q1 = (fullDepositYield * 25n) / 100n;
-                const q2 = (fullDepositYield * 75n) / 100n;
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q1, beneficiary1.address);
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q2, beneficiary2.address);
 
-                await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q1, beneficiary1.address);
-                await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q2, beneficiary2.address);
+            expect(await inheritanceProtocol.getState()).to.equal(3);
+            expect(await mockUSDC.balanceOf(beneficiary1.address)).to.equal(b1Before + q1);
+            expect(await mockUSDC.balanceOf(beneficiary2.address)).to.equal(b2Before + q2);
+        });
 
-                expect(await inheritanceProtocol.getState()).to.equal(3);
-                expect(await mockUSDC.balanceOf(beneficiary1.address)).to.equal(b1Before + q1);
-                expect(await mockUSDC.balanceOf(beneficiary2.address)).to.equal(b2Before + q2);
-            });
+        it("Underdetermined payout results in remainder being transferred to notary address", async function () {
+            const deposit = 2_000n * 10n ** 6n;
+            // Prepare funds and beneficiaries
+            await mockUSDC.mint(owner.address, deposit);
+            await mockUSDC.connect(owner).approve(await inheritanceProtocol.getAddress(), deposit);
+            await inheritanceProtocol.deposit(deposit);
+            await inheritanceProtocol.addBeneficiary(beneficiary1.address, 25n);
+            await inheritanceProtocol.addBeneficiary(beneficiary2.address, 15n); // Total of 40%
+
+            const b1Before = await mockUSDC.balanceOf(beneficiary1.address);
+            const b2Before = await mockUSDC.balanceOf(beneficiary2.address);
+            const notBefore = await mockUSDC.balanceOf(notary.address);
+
+            // Time travel to VERIFICATION
+            await connectedEthers.provider.send("evm_increaseTime", [Number(121n * DAY + 3n)]);
+            await connectedEthers.provider.send("evm_mine", []);
+            await inheritanceProtocol.updateState();
+            expect(await inheritanceProtocol.getState()).to.equal(2);
+
+            // Notary uploads death verification
+            await (inheritanceProtocol.connect(notary) as any).uploadDeathVerification(true, "0xdead");
+
+            // One more update should payout
+            const tx = await inheritanceProtocol.updateState();
+
+            const fullDepositYield = (deposit * YIELD_FACTOR) / YIELD_DENOM;
+            const q1 = (fullDepositYield * 25n) / 100n;
+            const q2 = (fullDepositYield * 15n) / 100n;
+            const q3 = (fullDepositYield * 60n) / 100n;
+
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q1, beneficiary1.address);
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q2, beneficiary2.address);
+            await expect(tx).to.emit(inheritanceProtocol, "PayoutMade").withArgs(q3, notary.address);
+
+            expect(await inheritanceProtocol.getState()).to.equal(3);
+            expect(await mockUSDC.balanceOf(beneficiary1.address)).to.equal(b1Before + q1);
+            expect(await mockUSDC.balanceOf(beneficiary2.address)).to.equal(b2Before + q2);
         });
     });
 });
-
