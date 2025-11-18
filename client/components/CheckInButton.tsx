@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 interface CheckInButtonProps {
   onCheckIn: () => Promise<void>;
@@ -15,10 +15,10 @@ export default function CheckInButton({
     <button
       onClick={onCheckIn}
       disabled={isLoading}
-      className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition transform hover:scale-105 active:scale-95 text-lg shadow-lg"
+      className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition text-sm"
     >
-      <Heart className="w-6 h-6 animate-pulse" />
-      {isLoading ? "Checking In..." : "Check In (I'm Alive!)"}
+      <CheckCircle className="w-4 h-4" />
+      {isLoading ? "Checking In..." : "Confirm Check-in"}
     </button>
   );
 }

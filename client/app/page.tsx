@@ -17,6 +17,7 @@ import {
   loadDeploymentInfo,
 } from "@/lib/contracts";
 import { RPC_URL } from "@/lib/constants";
+import { Shield, AlertTriangle, Search, CheckCircle } from "lucide-react";
 
 export default function Home() {
   const [signer, setSigner] = useState<ethers.Signer | null>(null);
@@ -114,42 +115,42 @@ export default function Home() {
         };
 
         contract.on("CheckedIn", safeHandler(() => {
-          addLog("✓ Owner checked in", "event");
+          addLog("Owner checked in", "event");
           loadContractData();
         }));
 
         contract.on("Deposited", safeHandler((amount) => {
-          addLog(`✓ Deposited ${ethers.formatUnits(amount, 6)} USDC`, "event");
+          addLog(`Deposited ${ethers.formatUnits(amount, 6)} USDC`, "event");
           loadContractData();
         }));
 
         contract.on("Withdrawn", safeHandler((amount) => {
-          addLog(`✓ Withdrew ${ethers.formatUnits(amount, 6)} USDC`, "event");
+          addLog(`Withdrew ${ethers.formatUnits(amount, 6)} USDC`, "event");
           loadContractData();
         }));
 
         contract.on("StateChanged", safeHandler((_, from, to) => {
-          const stateNames = ["ACTIVE", "WARNING", "VERIFICATION", "DISTRIBUTION"];
+          const stateNames = ["Active", "Warning", "Verification", "Distribution"];
           addLog(
-            `State changed: ${stateNames[from]} → ${stateNames[to]}`,
+            `State changed: ${stateNames[from]} to ${stateNames[to]}`,
             "warning"
           );
           loadContractData();
         }));
 
         contract.on("BeneficiaryAdded", safeHandler((addr, amount) => {
-          addLog(`✓ Beneficiary added: ${addr.slice(0, 6)}...${addr.slice(-4)} (${amount}%)`, "event");
+          addLog(`Beneficiary added: ${addr.slice(0, 6)}...${addr.slice(-4)} (${amount}%)`, "event");
           loadContractData();
         }));
 
         contract.on("BeneficiaryRemoved", safeHandler((addr) => {
-          addLog(`✓ Beneficiary removed: ${addr.slice(0, 6)}...${addr.slice(-4)}`, "event");
+          addLog(`Beneficiary removed: ${addr.slice(0, 6)}...${addr.slice(-4)}`, "event");
           loadContractData();
         }));
 
         contract.on("PayoutMade", safeHandler((amount, payoutAddress) => {
           addLog(
-            `💰 Payout: ${ethers.formatUnits(amount, 6)} USDC → ${payoutAddress.slice(0, 6)}...${payoutAddress.slice(-4)}`,
+            `Payout: ${ethers.formatUnits(amount, 6)} USDC to ${payoutAddress.slice(0, 6)}...${payoutAddress.slice(-4)}`,
             "success"
           );
           loadContractData();
@@ -181,7 +182,7 @@ export default function Home() {
       const tx = await contract.checkIn();
       addLog("Check-in transaction sent. Waiting for confirmation...", "info");
       await tx.wait();
-      addLog("✓ Check-in successful!", "success");
+      addLog("Check-in successful", "success");
       await loadContractData();
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Check-in failed";
@@ -216,7 +217,7 @@ export default function Home() {
       addLog("Sending deposit transaction...", "info");
       const tx = await contract.deposit(parsedAmount);
       await tx.wait();
-      addLog(`✓ Deposited ${amount} USDC successfully!`, "success");
+      addLog(`Deposited ${amount} USDC successfully`, "success");
       await loadContractData();
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Deposit failed";
@@ -237,7 +238,7 @@ export default function Home() {
       addLog("Sending withdraw transaction...", "info");
       const tx = await contract.withdraw(parsedAmount);
       await tx.wait();
-      addLog(`✓ Withdrew ${amount} USDC successfully!`, "success");
+      addLog(`Withdrew ${amount} USDC successfully`, "success");
       await loadContractData();
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Withdraw failed";
@@ -256,7 +257,7 @@ export default function Home() {
       const contract = await getInheritanceProtocolContract(signer);
       const tx = await contract.addBeneficiary(beneficiaryAddress, amount);
       await tx.wait();
-      addLog(`✓ Beneficiary added successfully!`, "success");
+      addLog(`Beneficiary added successfully`, "success");
       await loadContractData();
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Failed to add beneficiary";
@@ -275,7 +276,7 @@ export default function Home() {
       const contract = await getInheritanceProtocolContract(signer);
       const tx = await contract.removeBeneficiary(beneficiaryAddress);
       await tx.wait();
-      addLog(`✓ Beneficiary removed successfully!`, "success");
+      addLog(`Beneficiary removed successfully`, "success");
       await loadContractData();
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Failed to remove beneficiary";
@@ -294,7 +295,7 @@ export default function Home() {
       const contract = await getInheritanceProtocolContract(signer);
       const tx = await contract.updateState();
       await tx.wait();
-      addLog("✓ State updated successfully!", "success");
+      addLog("State updated successfully", "success");
       await loadContractData();
     } catch (err: any) {
       const errorMsg = err.reason || err.message || "Failed to update state";
@@ -316,7 +317,7 @@ export default function Home() {
       const deploymentInfo = await loadDeploymentInfo();
       if (newAddress.toLowerCase() === deploymentInfo.accounts.notary.toLowerCase()) {
         setIsNotary(true);
-        addLog("🔔 Notary access granted", "info");
+        addLog("Notary access granted", "info");
       } else {
         setIsNotary(false);
       }
@@ -345,29 +346,29 @@ export default function Home() {
       const tx = await contract.uploadDeathVerification(deceased, proof);
       addLog("Death certificate transaction sent. Waiting for confirmation...", "info");
       await tx.wait();
-      addLog("✓ Death certificate uploaded successfully!", "success");
-      
+      addLog("Death certificate uploaded successfully", "success");
+
       // Reload contract data to check current state
       await loadContractData();
-      
+
       // Automatically transition to DISTRIBUTION if deceased
       if (deceased) {
         // Check current state - need to be in VERIFICATION to transition to DISTRIBUTION
         const currentState = await contract.getState();
-        
+
         // If not in VERIFICATION, first transition to VERIFICATION
         if (currentState !== 2) { // 2 = VERIFICATION
-          addLog("Transitioning to VERIFICATION state...", "info");
+          addLog("Transitioning to Verification state...", "info");
           const changeStateTx = await contract.changeState(2); // VERIFICATION = 2
           await changeStateTx.wait();
-          addLog("✓ Contract state changed to VERIFICATION", "success");
+          addLog("Contract state changed to Verification", "success");
         }
-        
+
         // Now update state to trigger transition to DISTRIBUTION
         addLog("Updating contract state to trigger distribution...", "info");
         const updateTx = await contract.updateState();
         await updateTx.wait();
-        addLog("✓ Contract state updated! Distribution phase initiated.", "success");
+        addLog("Contract state updated. Distribution phase initiated.", "success");
         await loadContractData();
       }
     } catch (err: any) {
@@ -380,54 +381,57 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-8">
+    <div className="min-h-screen px-4 py-8 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-12 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-5xl font-bold text-white mb-2">
+            <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
               Inheritance Protocol
             </h1>
-            <p className="text-gray-200 text-lg">
-              Secure decentralized estate planning
+            <p className="text-gray-500 text-sm mt-1">
+              Decentralized estate planning
             </p>
           </div>
           <WalletConnector onConnect={handleConnect} onDisconnect={handleDisconnect} />
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-500/20 border border-red-500 rounded-lg p-4 text-red-200">
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">
             {error}
           </div>
         )}
 
         {!signer ? (
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-12 border border-white/20 text-center">
-            <p className="text-gray-300 text-lg mb-4">
-              Please connect your wallet to manage your inheritance protocol
+          <div className="bg-white rounded-xl p-12 border border-gray-200 text-center shadow-card">
+            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Shield className="w-6 h-6 text-gray-400" />
+            </div>
+            <p className="text-gray-700 text-base mb-2">
+              Connect your wallet to manage your inheritance protocol
             </p>
-            <p className="text-gray-400">
-              Make sure MetaMask is installed and set to the local Hardhat network (localhost:8545)
+            <p className="text-gray-500 text-sm">
+              Ensure MetaMask is installed and connected to the correct network
             </p>
           </div>
         ) : isNotary ? (
           // NOTARY VIEW - Minimal interface
           <div className="space-y-6">
             {/* Notary Header */}
-            <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-md rounded-2xl p-6 border border-purple-500/30">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-purple-500/30 rounded-full flex items-center justify-center">
-                  <span className="text-2xl">⚖️</span>
+            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-card">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-slate-600" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">Notary Dashboard</h2>
-                  <p className="text-purple-200 text-sm">Authorized notary access</p>
+                  <h2 className="text-xl font-semibold text-gray-900">Notary Dashboard</h2>
+                  <p className="text-gray-500 text-sm">Authorized notary access</p>
                 </div>
               </div>
               {/* Current State Info */}
-              <div className="mt-4 pt-4 border-t border-purple-500/20">
-                <p className="text-gray-300 text-sm">
-                  Current Contract State: <span className="font-semibold text-white">{["ACTIVE", "WARNING", "VERIFICATION", "DISTRIBUTION"][state]}</span>
+              <div className="pt-4 border-t border-gray-100">
+                <p className="text-gray-500 text-sm">
+                  Current Contract State: <span className="font-medium text-gray-900">{["Active", "Warning", "Verification", "Distribution"][state]}</span>
                 </p>
               </div>
             </div>
@@ -440,10 +444,8 @@ export default function Home() {
               isLoading={loading}
             />
 
-            {/* Event Logger - Right side for notary */}
-            <div className="lg:col-span-1">
-              <EventLogger logs={logs} onClear={clearLogs} />
-            </div>
+            {/* Event Logger */}
+            <EventLogger logs={logs} onClear={clearLogs} />
           </div>
         ) : (
           // OWNER VIEW - Changes based on state
@@ -452,9 +454,7 @@ export default function Home() {
               // ACTIVE STATE - Full functionality
               <>
                 {/* Check-in Section - Prominent CTA */}
-                <div className="col-span-full">
-                  <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
-                </div>
+                <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
 
                 {/* Main Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -498,15 +498,17 @@ export default function Home() {
               // WARNING STATE - Urgent check-in needed
               <>
                 {/* Urgent Warning Banner */}
-                <div className="bg-yellow-500/20 border-2 border-yellow-500 rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-4xl">⚠️</span>
-                    <div>
-                      <h2 className="text-2xl font-bold text-yellow-200">Warning: Check-in Overdue</h2>
-                      <p className="text-yellow-300">You missed your check-in deadline. Please check in immediately!</p>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="w-5 h-5 text-amber-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-lg font-semibold text-amber-900 mb-1">Check-in Overdue</h2>
+                      <p className="text-amber-700 text-sm mb-4">You missed your check-in deadline. Please check in immediately to prevent the verification process from starting.</p>
+                      <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
                     </div>
                   </div>
-                  <CheckInButton onCheckIn={handleCheckIn} isLoading={loading} />
                 </div>
 
                 {/* Main Grid - Limited functionality */}
@@ -537,12 +539,14 @@ export default function Home() {
             ) : state === 2 ? (
               // VERIFICATION STATE - Death verification in progress
               <>
-                <div className="bg-orange-500/20 border-2 border-orange-500 rounded-2xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-4xl">🔍</span>
+                <div className="bg-orange-50 border border-orange-200 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Search className="w-5 h-5 text-orange-600" />
+                    </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-orange-200">Verification Phase</h2>
-                      <p className="text-orange-300">Your death certificate is being verified. No administrative actions available.</p>
+                      <h2 className="text-lg font-semibold text-orange-900 mb-1">Verification Phase</h2>
+                      <p className="text-orange-700 text-sm">Death certificate is being verified. Administrative actions are currently unavailable.</p>
                     </div>
                   </div>
                 </div>
@@ -559,16 +563,16 @@ export default function Home() {
                       />
                       <BalanceDisplay balance={balance} depositedPercentage={payoutPercentage} />
                     </div>
-                    <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                      <h3 className="text-xl font-bold text-white mb-4">Beneficiaries</h3>
+                    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-card">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Beneficiaries</h3>
                       {beneficiaries.length === 0 ? (
-                        <p className="text-gray-400">No beneficiaries configured</p>
+                        <p className="text-gray-500 text-sm">No beneficiaries configured</p>
                       ) : (
                         <div className="space-y-2">
                           {beneficiaries.map((b, idx) => (
-                            <div key={idx} className="flex justify-between items-center p-3 bg-white/5 rounded-lg">
-                              <span className="text-white font-mono text-sm">{b.payoutAddress.slice(0, 6)}...{b.payoutAddress.slice(-4)}</span>
-                              <span className="text-gray-300">{b.amount}%</span>
+                            <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                              <span className="text-gray-900 font-mono text-sm">{b.payoutAddress.slice(0, 6)}...{b.payoutAddress.slice(-4)}</span>
+                              <span className="text-gray-600 text-sm">{b.amount}%</span>
                             </div>
                           ))}
                         </div>
@@ -583,42 +587,44 @@ export default function Home() {
             ) : (
               // DISTRIBUTION STATE - Payouts completed (compact view)
               <>
-                <div className="bg-red-500/20 border-2 border-red-500 rounded-2xl p-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">✅</span>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="w-5 h-5 text-slate-600" />
+                    </div>
                     <div>
-                      <h2 className="text-xl font-bold text-red-200">Distribution Complete</h2>
-                      <p className="text-red-300 text-sm">All assets have been distributed to beneficiaries.</p>
+                      <h2 className="text-lg font-semibold text-slate-900 mb-1">Distribution Complete</h2>
+                      <p className="text-slate-600 text-sm">All assets have been distributed to beneficiaries.</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Compact summary view */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <div className="lg:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2 space-y-6">
                     {/* Compact State and Balance */}
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                        <p className="text-gray-300 text-xs mb-1">State</p>
-                        <p className="text-lg font-bold text-red-400">DISTRIBUTION</p>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-card">
+                        <p className="text-gray-500 text-xs mb-1">State</p>
+                        <p className="text-lg font-semibold text-slate-600">Distribution</p>
                       </div>
-                      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                        <p className="text-gray-300 text-xs mb-1">Balance</p>
-                        <p className="text-lg font-bold text-white">0 USDC</p>
+                      <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-card">
+                        <p className="text-gray-500 text-xs mb-1">Balance</p>
+                        <p className="text-lg font-semibold text-gray-900">0 USDC</p>
                       </div>
                     </div>
-                    
+
                     {/* Scrollable Beneficiaries List */}
-                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                      <h3 className="text-lg font-bold text-white mb-3">Final Beneficiaries</h3>
+                    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-card">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Final Beneficiaries</h3>
                       {beneficiaries.length === 0 ? (
-                        <p className="text-gray-400 text-sm">No beneficiaries were configured</p>
+                        <p className="text-gray-500 text-sm">No beneficiaries were configured</p>
                       ) : (
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                           {beneficiaries.map((b, idx) => (
-                            <div key={idx} className="flex justify-between items-center p-2 bg-white/5 rounded-lg">
-                              <span className="text-white font-mono text-xs">{b.payoutAddress.slice(0, 6)}...{b.payoutAddress.slice(-4)}</span>
-                              <span className="text-green-400 font-semibold text-sm">{b.amount}% ✓ Paid</span>
+                            <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                              <span className="text-gray-900 font-mono text-xs">{b.payoutAddress.slice(0, 6)}...{b.payoutAddress.slice(-4)}</span>
+                              <span className="text-emerald-600 font-medium text-sm">{b.amount}% Paid</span>
                             </div>
                           ))}
                         </div>

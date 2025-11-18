@@ -1,7 +1,7 @@
 "use client";
 
-import { STATE_NAMES, STATE_COLORS, STATE_DESCRIPTIONS } from "@/lib/constants";
-import { Clock } from "lucide-react";
+import { STATE_NAMES, STATE_COLORS, STATE_DESCRIPTIONS, STATE_TEXT_COLORS } from "@/lib/constants";
+import { Clock, Activity } from "lucide-react";
 
 interface StateDisplayProps {
   state: number;
@@ -16,8 +16,9 @@ export default function StateDisplay({
   onUpdateState,
   isLoading,
 }: StateDisplayProps) {
-  const stateName = STATE_NAMES[state] || "UNKNOWN";
+  const stateName = STATE_NAMES[state] || "Unknown";
   const stateColor = STATE_COLORS[state] || "bg-gray-500";
+  const stateTextColor = STATE_TEXT_COLORS[state] || "text-gray-600";
   const stateDescription = STATE_DESCRIPTIONS[state] || "Unknown state";
 
   const lastCheckInDate = new Date(lastCheckIn * 1000);
@@ -26,26 +27,29 @@ export default function StateDisplay({
   );
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-      <h2 className="text-2xl font-bold text-white mb-6">Protocol Status</h2>
+    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-card">
+      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+        <Activity className="w-5 h-5 text-gray-400" />
+        Protocol Status
+      </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-4">
         {/* Current State */}
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <p className="text-gray-300 text-sm mb-2">Current State</p>
-          <div className="flex items-center gap-3 mb-4">
-            <div className={`w-4 h-4 rounded-full ${stateColor} animate-pulse`}></div>
-            <p className="text-2xl font-bold text-white">{stateName}</p>
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-gray-500 text-xs mb-2">Current State</p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-2 h-2 rounded-full ${stateColor}`}></div>
+            <p className={`text-lg font-semibold ${stateTextColor}`}>{stateName}</p>
           </div>
-          <p className="text-gray-400 text-sm">{stateDescription}</p>
+          <p className="text-gray-500 text-xs">{stateDescription}</p>
         </div>
 
         {/* Last Check-in */}
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <p className="text-gray-300 text-sm mb-2">Last Check-in</p>
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-5 h-5 text-orange-400" />
-            <p className="text-2xl font-bold text-white">{daysSinceCheckIn}d ago</p>
+        <div className="bg-gray-50 rounded-lg p-3">
+          <p className="text-gray-500 text-xs mb-2">Last Check-in</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-4 h-4 text-gray-400" />
+            <p className="text-lg font-semibold text-gray-900">{daysSinceCheckIn}d ago</p>
           </div>
           <p className="text-gray-400 text-xs">
             {lastCheckInDate.toLocaleDateString()} {lastCheckInDate.toLocaleTimeString()}
@@ -57,7 +61,7 @@ export default function StateDisplay({
       <button
         onClick={onUpdateState}
         disabled={isLoading}
-        className="mt-6 w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition transform hover:scale-105 active:scale-95"
+        className="mt-4 w-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700 font-medium py-2 rounded-lg transition text-sm"
       >
         {isLoading ? "Updating..." : "Update State"}
       </button>
