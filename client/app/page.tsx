@@ -353,22 +353,11 @@ export default function Home() {
 
       // Automatically transition to DISTRIBUTION if deceased
       if (deceased) {
-        // Check current state - need to be in VERIFICATION to transition to DISTRIBUTION
-        const currentState = await contract.getState();
-
-        // If not in VERIFICATION, first transition to VERIFICATION
-        if (currentState !== 2) { // 2 = VERIFICATION
-          addLog("Transitioning to Verification state...", "info");
-          const changeStateTx = await contract.changeState(2); // VERIFICATION = 2
-          await changeStateTx.wait();
-          addLog("Contract state changed to Verification", "success");
-        }
-
-        // Now update state to trigger transition to DISTRIBUTION
-        addLog("Updating contract state to trigger distribution...", "info");
-        const updateTx = await contract.updateState();
-        await updateTx.wait();
-        addLog("Contract state updated. Distribution phase initiated.", "success");
+        // Directly transition to DISTRIBUTION state
+        addLog("Transitioning to Distribution state...", "info");
+        const changeStateTx = await contract.changeState(3); // DISTRIBUTION = 3
+        await changeStateTx.wait();
+        addLog("Distribution phase initiated. Payouts processed.", "success");
         await loadContractData();
       }
     } catch (err: any) {

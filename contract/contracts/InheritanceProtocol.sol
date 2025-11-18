@@ -286,6 +286,24 @@ contract InheritanceProtocol is Ownable, ReentrancyGuard {
     }
 
     /**
+     * Allows the notary to change the contract state directly.
+     * This is used to bypass time-based requirements for testing/demo purposes.
+     * Only callable by the notary.
+     * Will not be used in production.
+     * @param to The target state to transition to.
+     */
+    function changeState(State to) external onlyNotary {
+        State oldState = _currentState;
+        _currentState = to;
+        emit StateChanged(block.timestamp, oldState, _currentState);
+
+        // Trigger payout if we reached DISTRIBUTION
+        if (_currentState == State.DISTRIBUTION) {
+            distributePayout();
+        }
+    }
+
+    /**
      * Checks if the owner died by calling death certificate oracle.
      * @return true if the owner died, else otherwise.
      */
