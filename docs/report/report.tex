@@ -156,7 +156,7 @@
         \item All administrative changes can only be made by the contract's owner.
     \end{itemize}
     On distribution, the contract retrieves the pool balance from Aave, computes each beneficiary's share by percentage, and transfers tokens accordingly by iterating through the list of beneficiaries.
-    If the sum of percentages is below 100\%, the residual is sent to a donation address to prevent funds from being stranded forever.
+    If the sum of percentages is below 100\%, the residual is sent to the notary address to prevent funds from being stranded forever and can be distributed fairly and according to local law.
 
     \subsection{Funds Management and Aave Integration}\label{subsec:funds}
     The protocol accepts an ERC\nobreakdash-20 token (MockUSDC in our deployment) via \texttt{deposit}.
@@ -188,6 +188,7 @@
     \begin{itemize}
         \item \textbf{Oracle risk}: a compromised notary/oracle could wrongfully trigger distribution.
         This is mitigated organizationally (trusted notaries) and could be strengthened with multi-sig attestations or time delays.
+        Furthermore even a compromised notary could not trigger payout while the owner still checks in.
         \item \textbf{Griefing/liveness}: anyone can call \texttt{updateState()}, but transitions are conditional and idempotent; no value is at risk.
         \item \textbf{External calls}: interactions with the pool and token are performed after state updates and protected by \texttt{nonReentrant}.
         The donation transfer happens last to simplify reasoning.
