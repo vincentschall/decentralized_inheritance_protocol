@@ -1,20 +1,55 @@
 # Decentralized inheritance protocol
 
+## Quick Start
+
+### Installation
+
+```bash
+# Install contract dependencies
+cd contract && npm install && cd ..
+
+# Install client dependencies
+cd client && npm install && cd ..
+```
+
+### Running the Application
+
+**Terminal 1** - Start local blockchain:
+```bash
+npx hardhat node
+```
+MetaMask Chain ID: `31337`
+
+**Terminal 2** - Deploy contracts:
+```bash
+npm run deploy
+```
+
+**Terminal 3** - Run frontend:
+```bash
+cd client
+npm run dev
+```
+
+App running on `http://localhost:3000`
+
+### MetaMask Setup
+- Add custom RPC: `http://localhost:8545`
+- Chain ID: `31337`
+- Import test account from Hardhat output
+
 ## Referenced Documents
 
 * [CONTRIBUTING](CONTRIBUTING.md)
 * [License](LICENSE.md)
 * [Description](description.txt)
 * [LatexREADME](docs/report/README.md)
-* [ClientREADME](client/README.md)
 
 ## Scripts
 
 * [LatexBuild](docs/report/build.sh)
 * [Cleanup](cleanup.js)
 * [HardhatStart](start.js)
-
-For the client please refer to the [ClientREADME](client/README.md).
 
 ## Roadmap
 
