@@ -15,36 +15,36 @@ export default function BalanceDisplay({
   const formattedBalance = parseFloat(formatUnits(balance, 6)).toFixed(2);
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-card">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Coins className="w-6 h-6 text-yellow-400" />
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <Coins className="w-5 h-5 text-gray-400" />
           Total Balance
         </h2>
       </div>
 
-      <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-        <p className="text-gray-400 text-sm mb-2">USDC Deposited</p>
-        <p className="text-4xl font-bold text-white mb-4">${formattedBalance}</p>
+      <div className="bg-gray-50 rounded-lg p-4">
+        <p className="text-gray-500 text-xs mb-1">USDC Deposited</p>
+        <p className="text-3xl font-semibold text-gray-900 mb-4">${formattedBalance}</p>
 
         {/* Payout Distribution */}
         <div className="mt-4 space-y-2">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-gray-400 text-sm">Payout Distribution</p>
-            <p className="text-white font-semibold">{depositedPercentage}%</p>
+            <p className="text-gray-500 text-xs">Payout Distribution</p>
+            <p className="text-gray-900 font-medium text-sm">{depositedPercentage}%</p>
           </div>
-          <div className="w-full bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-1.5">
             <div
-              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gray-900 h-1.5 rounded-full transition-all duration-300"
               style={{ width: `${depositedPercentage}%` }}
             ></div>
           </div>
         </div>
 
         {depositedPercentage === 100 ? (
-          <p className="text-green-400 text-sm mt-3">✓ Payout fully determined</p>
+          <p className="text-emerald-600 text-xs mt-3">Payout fully determined</p>
         ) : (
-          <p className="text-yellow-400 text-sm mt-3">
+          <p className="text-amber-600 text-xs mt-3">
             {100 - depositedPercentage}% remaining to distribute
           </p>
         )}

@@ -1,0 +1,231 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\setbeamertemplate{footline}{}
+\setbeamertemplate{navigation symbols}{}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Solidity syntax highlighting
+\definecolor{soliditykeyword}{HTML}{005CC5}
+\definecolor{soliditytype}{HTML}{22863A}
+\definecolor{soliditycomment}{HTML}{6A737D}
+
+\lstdefinelanguage{Solidity}{
+    keywords={pragma, solidity, contract, function, returns, if, else, return, require, emit, enum, struct, public, private, view, modifier},
+    keywordstyle=\color{soliditykeyword}\bfseries,
+    ndkeywords={uint256, address, bool, State},
+    ndkeywordstyle=\color{soliditytype}\bfseries,
+    comment=[l]{//},
+    commentstyle=\color{soliditycomment}\ttfamily,
+    sensitive=true
+}
+
+\lstset{
+    language=Solidity,
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,
+    frame=single
+}
+
+\title{Decentralized Inheritance Protocol}
+\subtitle{Smart Contract for Crypto Asset Inheritance}
+\author{Noah Klaholz \and Vincent Schall \and Max Mendes}
+\institute{University of Basel}
+\date{November 2025}
+
+\begin{document}
+
+\begin{frame}
+    \titlepage
+\end{frame}
+
+\section{Motivation}
+
+\begin{frame}{The Problem}
+    \begin{itemize}
+        \item \textbf{3.7 million Bitcoin} are estimated to be lost and unrecoverable
+        \item Major cause: owners passing away without sharing access
+        \item Traditional inheritance systems are:
+        \begin{itemize}
+            \item Slow (months to years)
+            \item Expensive (legal fees, court costs)
+            \item Prone to conflict
+        \end{itemize}
+    \end{itemize}
+    \vspace{0.5cm}
+    \textbf{Question:} What happens to your crypto when you die?
+\end{frame}
+
+\section{Solution Overview}
+
+\begin{frame}{The Decentralized Inheritance Protocol}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Key Features:}
+        \begin{itemize}
+            \item Deploy personal will contract
+            \item Define beneficiaries with percentages
+            \item Automated state machine
+            \item Yield generation via Aave
+            \item Death verification by notary
+        \end{itemize}
+
+        \column{0.5\textwidth}
+        \textbf{Benefits:}
+        \begin{itemize}
+            \item No intermediaries
+            \item Transparent rules
+            \item Assets grow over time
+            \item Immediate distribution
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\section{Smart Contract Architecture}
+
+\begin{frame}{State Machine}
+    \begin{center}
+        \texttt{ACTIVE} $\rightarrow$ \texttt{WARNING} $\rightarrow$ \texttt{VERIFICATION} $\rightarrow$ \texttt{DISTRIBUTION}
+    \end{center}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \item \textbf{ACTIVE}: Normal operation, owner manages funds
+        \item \textbf{WARNING}: Missed check-in (90 days), 30-day grace period
+        \item \textbf{VERIFICATION}: Awaiting death certificate from notary
+        \item \textbf{DISTRIBUTION}: Automatic payout to beneficiaries
+    \end{itemize}
+    \vspace{0.3cm}
+    \texttt{updateState()} is public -- anyone can trigger transitions
+\end{frame}
+
+\begin{frame}{Access Control \& Security}
+    \textbf{Roles:}
+    \begin{itemize}
+        \item \textbf{Owner}: Manage beneficiaries, deposit/withdraw, check-in
+        \item \textbf{Notary}: Upload death verification only
+    \end{itemize}
+    \vspace{0.3cm}
+    \textbf{Security Measures:}
+    \begin{itemize}
+        \item OpenZeppelin's \texttt{Ownable} and \texttt{ReentrancyGuard}
+        \item Phase guards (\texttt{onlyPreDistribution}, \texttt{onlyActiveWarning})
+        \item Bounded iteration (max 10 beneficiaries)
+        \item Solidity 0.8.x overflow protection
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Funds Management}
+    \begin{itemize}
+        \item Accepts ERC-20 tokens (USDC)
+        \item Deposits supplied to Aave lending pool
+        \item Earns yield while waiting (2-6\% APY on stablecoins)
+        \item Fully liquid -- owner can withdraw anytime
+    \end{itemize}
+    \vspace{0.3cm}
+    \textbf{Example:} \$100,000 at 4\% for 10 years = \$148,024
+\end{frame}
+
+\begin{frame}{Distribution Logic}
+    \begin{itemize}
+        \item Up to 10 beneficiaries with percentage shares
+        \item Total must not exceed 100\%
+        \item On distribution:
+        \begin{enumerate}
+            \item Withdraw all funds from Aave
+            \item Calculate each beneficiary's share
+            \item Transfer tokens to each address
+        \end{enumerate}
+        \item Residual (if $<$ 100\%) sent to notary for legal distribution
+    \end{itemize}
+\end{frame}
+
+\section{Design Decisions}
+
+\begin{frame}{Key Trade-offs}
+    \textbf{Removed: Vesting Schedules}
+    \begin{itemize}
+        \item Requires off-chain automation (Chainlink Keepers)
+        \item Adds recurring costs and complexity
+        \item Focus on core value: preventing total asset loss
+    \end{itemize}
+    \vspace{0.3cm}
+    \textbf{Manual State Transitions}
+    \begin{itemize}
+        \item No automation fees over years/decades
+        \item Beneficiaries incentivized to call \texttt{updateState()}
+    \end{itemize}
+    \vspace{0.3cm}
+    \textbf{Single Notary}
+    \begin{itemize}
+        \item Simpler than multi-sig
+        \item Narrowly scoped permissions
+    \end{itemize}
+\end{frame}
+
+\section{Tech Stack}
+
+\begin{frame}{Technology}
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Smart Contracts:}
+        \begin{itemize}
+            \item Solidity 0.8.28
+            \item Hardhat v3
+            \item OpenZeppelin Contracts
+            \item Hardhat Ignition
+        \end{itemize}
+
+        \column{0.5\textwidth}
+        \textbf{Frontend \& Testing:}
+        \begin{itemize}
+            \item TypeScript / React
+            \item Next.js
+            \item Mocha / Chai
+            \item ESLint
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\section{Future Work}
+
+\begin{frame}{Limitations \& Future Improvements}
+    \begin{itemize}
+        \item \textbf{Single-asset}: Extend to multiple ERC-20 tokens
+        \item \textbf{Max 10 beneficiaries}: Dynamic array with gas optimization
+        \item \textbf{Oracle centralization}: Multi-party notaries or decentralized attestation
+        \item \textbf{Automation}: Optional Chainlink Keepers integration
+        \item \textbf{UX}: EIP-2612 permit for gasless approvals
+    \end{itemize}
+\end{frame}
+
+\section{Demo}
+
+\begin{frame}{Live Demo}
+    \begin{center}
+        \Large Demo of the Inheritance Protocol Client
+    \end{center}
+    \vspace{0.5cm}
+    \begin{itemize}
+        \item Connect wallet
+        \item Deposit funds
+        \item Add beneficiaries
+        \item Check-in mechanism
+        \item State transitions
+    \end{itemize}
+\end{frame}
+
+\section{Q\&A}
+
+\begin{frame}{Questions?}
+    \begin{center}
+        \Huge Q \& A
+    \end{center}
+\end{frame}
+
+\end{document}

@@ -62,37 +62,37 @@ export default function BeneficiariesList({
   const totalPercentage = activeBeneficiaries.reduce((sum, b) => sum + b.amount, 0);
 
   return (
-    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+    <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-card">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Users className="w-6 h-6 text-blue-400" />
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <Users className="w-5 h-5 text-gray-400" />
           Beneficiaries
         </h2>
-        <span className="text-gray-400 text-sm">
+        <span className="text-gray-500 text-xs">
           {activeBeneficiaries.length} / {maxBeneficiaries}
         </span>
       </div>
 
       {/* Beneficiaries List */}
       {activeBeneficiaries.length > 0 ? (
-        <div className="space-y-3 mb-6">
+        <div className="space-y-2 mb-6">
           {activeBeneficiaries.map((beneficiary, index) => (
             <div
               key={index}
-              className="bg-white/5 rounded-xl p-4 border border-white/10 flex items-center justify-between hover:bg-white/10 transition"
+              className="bg-gray-50 rounded-lg p-3 flex items-center justify-between hover:bg-gray-100 transition"
             >
               <div className="flex-1">
-                <p className="text-white font-mono text-sm">
+                <p className="text-gray-900 font-mono text-sm">
                   {beneficiary.payoutAddress.slice(0, 6)}...{beneficiary.payoutAddress.slice(-4)}
                 </p>
-                <p className="text-gray-400 text-sm mt-1">
+                <p className="text-gray-500 text-xs mt-1">
                   {beneficiary.amount}% of total balance
                 </p>
               </div>
               <button
                 onClick={() => onRemoveBeneficiary(beneficiary.payoutAddress)}
                 disabled={isLoading}
-                className="p-2 hover:bg-red-500/20 rounded-lg transition text-red-400 hover:text-red-300 disabled:opacity-50"
+                className="p-2 hover:bg-red-50 rounded-lg transition text-red-500 hover:text-red-600 disabled:opacity-50"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -100,43 +100,43 @@ export default function BeneficiariesList({
           ))}
 
           {/* Total Percentage Progress */}
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10 mt-4">
+          <div className="bg-gray-50 rounded-lg p-3 mt-4">
             <div className="flex justify-between items-center mb-2">
-              <p className="text-gray-400 text-sm">Total Distribution</p>
-              <p className="text-white font-bold">{totalPercentage}%</p>
+              <p className="text-gray-500 text-xs">Total Distribution</p>
+              <p className="text-gray-900 font-medium text-sm">{totalPercentage}%</p>
             </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-1.5">
               <div
-                className={`h-2 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full transition-all duration-300 ${
                   totalPercentage === 100
-                    ? "bg-green-500"
+                    ? "bg-emerald-500"
                     : totalPercentage > 80
-                    ? "bg-yellow-500"
-                    : "bg-blue-500"
+                    ? "bg-amber-500"
+                    : "bg-gray-900"
                 }`}
                 style={{ width: `${Math.min(totalPercentage, 100)}%` }}
               ></div>
             </div>
             {totalPercentage > 100 && (
-              <p className="text-red-400 text-xs mt-2">⚠ Total exceeds 100%</p>
+              <p className="text-red-600 text-xs mt-2">Total exceeds 100%</p>
             )}
           </div>
         </div>
       ) : (
-        <div className="bg-white/5 rounded-xl p-8 border border-white/10 text-center mb-6">
-          <p className="text-gray-400">No beneficiaries added yet</p>
+        <div className="bg-gray-50 rounded-lg p-8 text-center mb-6">
+          <p className="text-gray-500 text-sm">No beneficiaries added yet</p>
         </div>
       )}
 
       {/* Add Beneficiary Form */}
       {showAddForm && activeBeneficiaries.length < maxBeneficiaries ? (
-        <form onSubmit={handleAddBeneficiary} className="bg-white/5 rounded-xl p-4 border border-white/10 mb-4">
+        <form onSubmit={handleAddBeneficiary} className="bg-gray-50 rounded-lg p-4 mb-4">
           <input
             type="text"
             placeholder="0x..."
             value={newAddress}
             onChange={(e) => setNewAddress(e.target.value)}
-            className="w-full bg-white/10 text-white placeholder-gray-500 rounded-lg px-3 py-2 border border-white/20 mb-3 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white text-gray-900 placeholder-gray-400 rounded-lg px-3 py-2 border border-gray-200 mb-3 focus:outline-none focus:border-gray-900 text-sm"
           />
           <input
             type="number"
@@ -145,14 +145,14 @@ export default function BeneficiariesList({
             onChange={(e) => setNewAmount(e.target.value)}
             min="1"
             max="100"
-            className="w-full bg-white/10 text-white placeholder-gray-500 rounded-lg px-3 py-2 border border-white/20 mb-3 focus:outline-none focus:border-blue-500"
+            className="w-full bg-white text-gray-900 placeholder-gray-400 rounded-lg px-3 py-2 border border-gray-200 mb-3 focus:outline-none focus:border-gray-900 text-sm"
           />
-          {addError && <p className="text-red-400 text-sm mb-3">{addError}</p>}
+          {addError && <p className="text-red-600 text-sm mb-3">{addError}</p>}
           <div className="flex gap-2">
             <button
               type="submit"
               disabled={addLoading || !newAddress || !newAmount}
-              className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold py-2 rounded-lg transition"
+              className="flex-1 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white font-medium py-2 rounded-lg transition text-sm"
             >
               {addLoading ? "Adding..." : "Add"}
             </button>
@@ -162,7 +162,7 @@ export default function BeneficiariesList({
                 setShowAddForm(false);
                 setAddError("");
               }}
-              className="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 rounded-lg transition"
+              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 rounded-lg transition text-sm"
             >
               Cancel
             </button>
@@ -175,9 +175,9 @@ export default function BeneficiariesList({
         <button
           onClick={() => setShowAddForm(true)}
           disabled={isLoading}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition"
+          className="w-full flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:opacity-50 text-white font-medium py-2.5 rounded-lg transition text-sm"
         >
-          <Plus className="w-5 h-5" />
+          <Plus className="w-4 h-4" />
           Add Beneficiary
         </button>
       )}
