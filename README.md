@@ -49,7 +49,6 @@ App running on `http://localhost:3000`
 
 * [LatexBuild](docs/report/build.sh)
 * [Cleanup](cleanup.js)
-* [HardhatStart](start.js)
 
 ## Roadmap
 
