@@ -22,7 +22,7 @@ MetaMask Chain ID: `31337`
 
 **Terminal 2** - Deploy contracts:
 ```bash
-npm run deploy
+npm run auto-deploy
 ```
 
 **Terminal 3** - Run frontend:
@@ -49,7 +49,6 @@ App running on `http://localhost:3000`
 
 * [LatexBuild](docs/report/build.sh)
 * [Cleanup](cleanup.js)
-* [HardhatStart](start.js)
 
 ## Roadmap
 
