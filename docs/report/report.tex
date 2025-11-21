@@ -7,11 +7,29 @@
 \usepackage{graphicx}
 \usepackage{xcolor}
 \usepackage[expansion=false]{microtype}
-\usepackage[hidelinks]{hyperref}
 \usepackage[backend=biber,style=numeric,sorting=nyt]{biblatex}
 \addbibresource{refs.bib}
 \usepackage{listings}
 
+% Define subtle link colors (professional & printer-friendly)
+\definecolor{InternalLink}{HTML}{1A4E80} % dark desaturated blue
+\definecolor{URLLink}{HTML}{7A1A80}      % purple-ish, distinct but subtle
+
+\usepackage[
+    pdfencoding=auto,
+    psdextra,
+    colorlinks=true,
+    linkcolor=InternalLink,  % internal links (sections, equations, refs)
+    citecolor=InternalLink,  % citations
+    filecolor=URLLink,       % file links (rare)
+    urlcolor=URLLink,        % external URLs
+    menucolor=InternalLink,
+    anchorcolor=InternalLink,
+]{hyperref}
+
+% Optional: makes URLs nicer (line breaks, no ugly fonts)
+\usepackage{url}
+\urlstyle{same}
 
 % Define custom colors
 \definecolor{soliditybg}{HTML}{F9F9F9}
@@ -165,7 +183,7 @@
     Critical operations are protected with \texttt{nonReentrant} and disallowed after distribution.
 
     \subsection{Death Verification and Oracles}\label{subsec:oracles}
-    Death verification is abstracted behind the \texttt{IDeathOracle} interface.
+    Death verification is abstracted behind the \texttt{IDeathOracle} interface. \newline
     The notary calls \texttt{uploadDeathVerification} with a boolean and proof bytes; the oracle persists the attestation and can still be called upon by beneficiaries to verify the death.
     The state machine polls the oracle by calling \texttt{isDeceased(owner())} and, if true, transitions to \textit{DISTRIBUTION}.
     In our test setup we use a mock oracle to enable deterministic unit tests.
@@ -227,7 +245,8 @@
     This creates three potential solutions, each with significant drawbacks:
 
     \begin{enumerate}
-        \item \textbf{Off-chain automation (Chainlink Keepers):} Use a keeper network to call \texttt{releaseVestedFunds()} at scheduled intervals \parencite{chainlink-automation}.
+        \item \textbf{Off-chain automation (Chainlink Keepers):} Use a keeper network to call \newline
+        \texttt{releaseVestedFunds()} at scheduled intervals \parencite{chainlink-automation}.
         This introduces recurring costs (keeper fees), centralizes liveness assumptions (keeper availability), and adds complexity to the deployment and maintenance workflow.
 
         \item \textbf{Pull-based vesting:} Beneficiaries call \texttt{withdraw()} whenever they want funds, and the contract calculates how much has vested since the last withdrawal.
@@ -345,6 +364,9 @@
 
     \begin{appendices}
 
+        The entire project can be found at the \href{https://github.com/vincentschall/decentralized_inheritance_protocol}{Project repository}
+
+        \section{Contract-Code}\label{sec:contract-code}
         \begin{lstlisting}[style=solidity,caption={smart contract},label={lst:inheritance-protocol-code}]
 
         // SPDX-License-Identifier: MIT
@@ -775,10 +797,6 @@
 
 
         \end{lstlisting}
-
-        \section{References}\label{sec:references}
-
-        The entire project can be found at the \parencite{project-repo} at https://github.com/vincentschall/decentralized\_inheritance\_protocol.
 
         \printbibliography
 
