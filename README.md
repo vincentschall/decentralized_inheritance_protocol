@@ -1,4 +1,12 @@
-# Decentralized inheritance protocol
+# Decentralized Inheritance Protocol
+
+Group project for the course *Smart Contracts and Decentralized Finance* (University of Basel, HS 2025).
+
+A blockchain-based digital will: the owner deposits USDC and names up to 10 beneficiaries with percentage shares. As long as the owner checks in regularly, the funds stay theirs and earn yield through an (Aave-style) lending pool. If check-ins stop, the contract moves through four phases (Active → Warning → Verification → Distribution); once a notary confirms the death via an oracle, the assets are paid out automatically.
+
+Built with Solidity, OpenZeppelin, Hardhat 3 (61 tests) and a Next.js client. Details in the [report](docs/report/report.pdf).
+
+![Client screenshot](docs/images/client_screenshot.png)
 
 ## Quick Start
 
