@@ -2,6 +2,7 @@
 import hre from "hardhat";
 import DeployModule from "../ignition/modules/Deploy.js";
 import fs from "fs";
+import path from "path";
 import { ethers } from "ethers";
 
 const RPC_URL = "http://localhost:8545";
@@ -110,7 +111,8 @@ async function deployContracts() {
     fs.writeFileSync(DEPLOYMENT_INFO_PATH, JSON.stringify(deploymentInfo, null, 2));
     console.log("Deployment info saved to deployment-info.json");
 
-    // Copy to client/public/
+    // Copy to client/public/ (created if missing, since git does not track empty folders)
+    fs.mkdirSync(path.dirname(CLIENT_DEPLOYMENT_INFO_PATH), { recursive: true });
     fs.copyFileSync(DEPLOYMENT_INFO_PATH, CLIENT_DEPLOYMENT_INFO_PATH);
     console.log("✓ Copied deployment-info.json to client/public/");
     
